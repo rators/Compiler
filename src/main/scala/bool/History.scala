@@ -6,7 +6,7 @@ import scala.collection.mutable
   * Convenience class for holding the values of ids.
   */
 class History() {
-  val iDValues: mutable.ArrayBuffer[Boolean] = mutable.ArrayBuffer.fill(26)(false)
+  private val iDValues: mutable.ArrayBuffer[Boolean] = mutable.ArrayBuffer.fill(26)(false)
 
   /**
     * Retrieves the value associated with the id.
