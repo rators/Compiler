@@ -9,15 +9,22 @@ case class ParamID(id: Int) extends Identifier
 
 sealed trait Symbol {
   val name: String
+
+  override def toString: String = {
+    this match {
+      case other => other.toString
+      case t: TypedSymbol => s"<${t.name}:${t.name}"
+    }
+  }
 }
 
-trait TypedSymbol extends Symbol {
+sealed trait TypedSymbol extends Symbol {
   val kType: Klass
   def id: Identifier
   def id_=(identifier: Identifier): Unit
 }
 
-class SubSymbol(override val name: String, override val kType: Klass) extends TypedSymbol {
+case class SubSymbol(override val name: String, override val kType: Klass) extends TypedSymbol {
   var _id: Identifier = _
   def id = _id
   def id_=(identifier: Identifier): Unit = {
@@ -28,7 +35,7 @@ class SubSymbol(override val name: String, override val kType: Klass) extends Ty
   }
 }
 
-class FieldSymbol(override val name: String, override val kType: Klass, field: Boolean) extends TypedSymbol {
+case class FieldSymbol(override val name: String, override val kType: Klass) extends TypedSymbol {
   var _id: Identifier = _
   def id = _id
   def id_=(identifier: Identifier): Unit = {
