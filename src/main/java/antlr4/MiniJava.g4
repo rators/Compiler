@@ -8,6 +8,7 @@ mainClass
   ;
 classDecl
   :   'class' ID '{' varDecl* methodDecl* '}'
+  |   'class' ID 'extends' ID '{' varDecl* methodDecl* '}'
   |   caseClassDecl
         ;
 caseClassDecl
@@ -37,17 +38,22 @@ statement
   ;
 condExpr
   :   '(' condExpr ')'
+  # parenExpr
   |   '!' condExpr
+  # notExpr
   |   condExpr '<' condExpr
+  # lessThanExpr
   |   condExpr '&&' condExpr
+  # andExpr
   |   expr
+  # notBoolExpr
   ;
 expr
   :   atom ( '+' atom | '-' atom | '*' atom )*
   |   ('+' | '-') atom
   |   atom '[' expr ']'
   |   atom '.' 'length'
-  |   atom '.' ID '(' ( expr ( ',' expr )* )? ')'
+  |   atom '.' ID '(' ( condExpr ( ',' condExpr )* )? ')'
   ;
 atom : ( INT
   | (ID | 'this') ('.' ID '(' expr ')')?

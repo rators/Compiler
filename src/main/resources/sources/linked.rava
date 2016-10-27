@@ -11,7 +11,7 @@ class Element {
 
     // Initialize some class variables
     public boolean Init(int v_Age, int v_Salary, boolean v_Married){
-	Age = v_Age ;
+	Age v_Age ;
 	Salary = v_Salary ;
 	Married = v_Married ;
 	return true ;
@@ -217,8 +217,7 @@ class List{
 class LL{
 
     public int Start(){
-
-	 head ;
+	List head;
 	List last_elem ;
 	boolean aux01 ;
 	Element el01 ;
