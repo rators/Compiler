@@ -8,11 +8,11 @@ mainClass
   ;
 classDecl
   :   'class' ID '{' varDecl* methodDecl* '}'
+        # baseClass
   |   'class' ID 'extends' ID '{' varDecl* methodDecl* '}'
-  |   caseClassDecl
-        ;
-caseClassDecl
-  :    'case' 'class' ID '(' (formalList (',' formalList+)*)? ')' ';'
+        # childClass
+  |   'case' 'class' ID '(' (formalList (',' formalList+)*)? ')' ';'
+        # caseClassDecl
         ;
 varDecl : type ID ';'
         ;

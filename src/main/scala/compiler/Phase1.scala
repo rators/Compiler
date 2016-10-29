@@ -5,6 +5,7 @@ import java.io.{File, FileInputStream}
 import antlr4.MiniJavaParser.ProgContext
 import antlr4.{MiniJavaBaseListener, MiniJavaLexer, MiniJavaParser}
 import compiler.CompilerImpl._
+import compiler.typecheck.KlassDeclarator
 import org.antlr.v4.runtime._
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
@@ -38,6 +39,10 @@ object Phase1 extends App {
     val walker = new ParseTreeWalker()
 
     walker.walk(new MiniJavaBaseListener(), parseTree)
+
+    val klassDeclarator = new KlassDeclarator()
+    walker.walk(klassDeclarator, parseTree)
+    println(klassDeclarator.klassMap)
   }
 
   def fileToStream(resourcePath: String): CharStream = {
@@ -66,7 +71,11 @@ class MiniJavaErrorListener extends BaseErrorListener {
         val splitStr = msg.split(' ')
         r.findFirstMatchIn(msg) match {
           case Some(expected) => MissingData(expected.group(0), splitStr(2))
-          case None => throw new AssertionError("Invalid err type, check string matching!.")
+          case None =>
+            val splitMsg = msg.split(' ')
+            val actual = splitMsg(2)
+            val expected = splitMsg(4)
+            MissingData(expected, actual)
         }
     }
   }

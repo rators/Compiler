@@ -1,16 +1,16 @@
-package compiler
+package compiler.scope
 
-import scala.collection.mutable.{ArrayBuffer, Map}
+import java.util
+
+import compiler.Symbol
+import Scope.SymbolMap
+import org.antlr.v4.runtime.tree.TerminalNode
 
 /**
   * The object representing all classes during semantic analysis and synthesis.
   */
-class Klass(name: String, superClass: Option[Klass]) extends Scope {
-  type SymbolMap = collection.mutable.HashMap[String, Symbol]
-
+class Klass(override val name: String, val superClass: Option[Klass]) extends Scope {
   val symbolTable = new SymbolMap()
-  override val scopeName: String = _
-
 
   override val parentScope: Option[Scope] = None
 
@@ -45,7 +45,7 @@ class Klass(name: String, superClass: Option[Klass]) extends Scope {
     * The symbol if one exists.
     */
   override def deepFind(name: String): Option[Symbol] = {
-    var currKlass = Option(this)
+    var currKlass: Option[Klass] = Option(this)
     var result: Option[Symbol] = None
 
     while (result.isEmpty && currKlass.isDefined) {
@@ -84,5 +84,12 @@ class Klass(name: String, superClass: Option[Klass]) extends Scope {
     * A set of symbols initialized in this scope.
     */
   override def initVars: Set[Symbol] =
-  throw new AssertionError("Initialized variables are not the responsibility of the Klass object")
+  throw new AssertionError("Initialized variables are not the responsibility of theKlass object")
+
+  override def toString = s"Klass($name, $parentScope)"
+}
+
+object Klass {
+  def apply(name: String) = new Klass(name, None)
+  def apply(name: String, parent: Klass) = new Klass(name, Some(parent))
 }

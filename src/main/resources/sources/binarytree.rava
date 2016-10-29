@@ -314,7 +314,7 @@ class Tree{
 
     // Print the elements of the tree
     public boolean RecPrint(Tree node){
-	boolean ntb ;
+	boolean ntb;
 
 	if (node.GetHas_Left()){
 	    //auxtree01 = node.GetLeft() ;

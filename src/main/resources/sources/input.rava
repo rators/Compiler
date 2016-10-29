@@ -110,5 +110,3 @@ class QS{
     }
 
 }
-
-case class Hello(int a, boolean r);

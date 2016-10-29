@@ -1,4 +1,8 @@
-package compiler
+package compiler.scope
+
+import compiler.Symbol
+
+import scala.collection.mutable
 
 /**
   * A trait representing a scope.
@@ -7,7 +11,7 @@ trait Scope {
   /**
     * The name of this scope.
     */
-  val scopeName: String
+  val name: String
 
   /**
     * Some enclosing scope for this scope if one exists.
@@ -72,5 +76,9 @@ trait Scope {
 }
 
 object Scope {
+  type SymbolMap = mutable.HashMap[String, Symbol]
+  implicit class SymbolMapImpl(val symbolMap: SymbolMap){
+    def +=(entry: (String, Symbol)): Unit = symbolMap.put(entry._1, entry._2)
+  }
 
 }

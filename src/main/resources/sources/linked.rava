@@ -275,5 +275,3 @@ class LL{
     }
 
 }
-
-case class A(int a, int a);
