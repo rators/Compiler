@@ -6,18 +6,21 @@ import antlr4.MiniJavaParser.ProgContext
 import antlr4.{MiniJavaBaseListener, MiniJavaLexer, MiniJavaParser}
 import compiler.CompilerImpl._
 import compiler.typecheck.listener.{KlassDeclarator, SymbolDeclarator}
-import compiler.typecheck.scope.Scope
+import compiler.typecheck.scope.{Klass, Scope}
 import compiler.typecheck.utils.KlassMap
+import compiler.typecheck.visitor.TypeChecker
 import org.antlr.v4.runtime._
 import org.antlr.v4.runtime.tree.{ParseTreeProperty, ParseTreeWalker}
 
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success, Try}
+
 /**
   * Main class for Phase 1.
   */
-object Phase1 extends App {
-  List("binarysearch", "binarytree", "bubble", "factorial", "input", "linear", "linked").foreach(parseFile)
+object Main extends App {
+//  List("binarysearch", "binarytree", "bubble", "factorial", "input", "linear", "linked").foreach(parseFile)
+  List("binarysearch").foreach(parseFile)
 
   def parseFile(fileName: String): Unit = {
     //create input stream from input file
@@ -37,6 +40,7 @@ object Phase1 extends App {
         val klassMap = klassDeclWalk(progContext)
         val scope = new ParseTreeProperty[Scope]()
         symbolDeclWalk(klassMap, scope, progContext)
+        typeCheckWalk(klassMap, scope, progContext)
         println(s"Updated klass map is $klassMap")
       case Failure(e) => System.err.println(s"COMPILER ERR -- $e")
     }
@@ -62,6 +66,13 @@ object Phase1 extends App {
     val klassDeclarator = new SymbolDeclarator(klassMap, scopes, null)
     walker.walk(klassDeclarator, parseTree)
     println(klassDeclarator.klassMap)
+  }
+
+  def typeCheckWalk(klassMap: KlassMap, scopes: ParseTreeProperty[Scope], parseTree: ProgContext): Unit = {
+    val walker = new ParseTreeWalker()
+    val callerTypes = new ParseTreeProperty[Klass]()
+    val typeChecker = new TypeChecker(klassMap, scopes, callerTypes,null)
+    typeChecker.visit(parseTree)
   }
 
   def fileToStream(resourcePath: String): CharStream = {
@@ -120,8 +131,8 @@ class MiniJavaErrorListener extends BaseErrorListener {
             }
         }
     }
-
-
   }
+
+
 
 }

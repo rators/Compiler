@@ -1,4 +1,4 @@
-// Generated from /Users/rtorres/IdeaProjects/Compiler/src/main/java/antlr4/MiniJava.g4 by ANTLR 4.5.3
+// Generated from C:/Users/rotorres/IdeaProjects/Compiler/src/main/java/antlr4\MiniJava.g4 by ANTLR 4.5.3
 package antlr4;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -266,13 +266,99 @@ public interface MiniJavaListener extends ParseTreeListener {
 	 */
 	void exitExpr(MiniJavaParser.ExprContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MiniJavaParser#atom}.
+	 * Enter a parse tree produced by the {@code intLiteral}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
 	 * @param ctx the parse tree
 	 */
-	void enterAtom(MiniJavaParser.AtomContext ctx);
+	void enterIntLiteral(MiniJavaParser.IntLiteralContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MiniJavaParser#atom}.
+	 * Exit a parse tree produced by the {@code intLiteral}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
 	 * @param ctx the parse tree
 	 */
-	void exitAtom(MiniJavaParser.AtomContext ctx);
+	void exitIntLiteral(MiniJavaParser.IntLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code idLiteral}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterIdLiteral(MiniJavaParser.IdLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code idLiteral}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitIdLiteral(MiniJavaParser.IdLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code methodCall}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterMethodCall(MiniJavaParser.MethodCallContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code methodCall}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitMethodCall(MiniJavaParser.MethodCallContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code constructorCall}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterConstructorCall(MiniJavaParser.ConstructorCallContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code constructorCall}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitConstructorCall(MiniJavaParser.ConstructorCallContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code thisCall}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterThisCall(MiniJavaParser.ThisCallContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code thisCall}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitThisCall(MiniJavaParser.ThisCallContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code integerArr}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterIntegerArr(MiniJavaParser.IntegerArrContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code integerArr}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitIntegerArr(MiniJavaParser.IntegerArrContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code parenExpression}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterParenExpression(MiniJavaParser.ParenExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code parenExpression}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitParenExpression(MiniJavaParser.ParenExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code booleanLit}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterBooleanLit(MiniJavaParser.BooleanLitContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code booleanLit}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitBooleanLit(MiniJavaParser.BooleanLitContext ctx);
 }

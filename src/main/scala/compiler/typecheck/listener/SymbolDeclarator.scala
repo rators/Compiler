@@ -30,7 +30,6 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
         setCaseKlassContructor(klass, ctx)
         scopes += ctx -> klass
     }
-
   }
 
   override def enterMainClass(ctx: MainClassContext): Unit = setScope(ctx)
@@ -53,17 +52,40 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   override def enterVarDecl(ctx: VarDeclContext): Unit = {
     val typeName = ctx.`type`().getText
     val symbolName = ctx.ID().getText
-
     currentScope match {
       case None => SymbolDeclarator.throwInvalidStateErr
       case Some(currScope) =>
         currScope.shallowFind(symbolName) match {
-          case None =>
-            val symbolType = klassMap get typeName get
-            val varSymbol = VarSymbol(symbolName, symbolType)
-            currScope.define(varSymbol)
+          case None => klassMap get typeName match {
+            case None => SymbolDeclarator.throwInvalidStateErr
+            case Some(symbolType) =>
+              val varSymbol = VarSymbol(symbolName, symbolType)
+              currScope.define(varSymbol)
+          }
           case Some(_) =>
             println("Multiple declarations for: " + symbolName)
+            SymbolDeclarator.throwInvalidStateErr
+        }
+    }
+  }
+
+  override def enterPropertyDecl(ctx: PropertyDeclContext): Unit = {
+    val typeName = ctx.`type`().getText
+    val symbolName = ctx.ID().getText
+    currentScope match {
+      case None => SymbolDeclarator.throwInvalidStateErr
+      case Some(currScope) =>
+        currScope.shallowFind(symbolName) match {
+          case None => klassMap get typeName match {
+            case None =>
+              println(s"Symbol $typeName not found")
+              SymbolDeclarator.throwInvalidStateErr
+            case Some(symbolType) =>
+              val varSymbol = PropertySymbol(symbolName, symbolType)
+              currScope.define(varSymbol)
+          }
+          case Some(_) =>
+            println(s"Symbol $symbolName is already defined")
             SymbolDeclarator.throwInvalidStateErr
         }
     }
@@ -108,9 +130,12 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   override def exitMethodDecl(ctx: MethodDeclContext): Unit = handleExitScope()
 
   /**
+    * Handles the entry into a block scope.
     *
     * @param parserRuleContext
+    *                          The context associated with a block scope.
     * @param parentScope
+    *                    The parent scope, generally the current scope.
     */
   private def handleBlockScope(implicit parserRuleContext: ParserRuleContext, parentScope: Scope = currentScope.get) = {
     val blockScope = new Block(parentScope)
@@ -119,7 +144,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
-    *
+    * Handles the exiting of a scope.
     */
   private def handleExitScope() = {
     currentScope = currentScope match {
@@ -129,9 +154,12 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Sets the scope to the method parameter.
     *
     * @param method
+    *               The method to set.
     * @param ctx
+    *            The context associated with a parser rule context.
     */
   private def setScope(method: Scope)(ctx: ParserRuleContext) = {
     currentScope = Some(method)
@@ -139,9 +167,13 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Sets the scope to the scope associated with the context paramters. Returns the newly
+    * created scope.
     *
     * @param ctx
+    *            The context associated with a parser rule context.
     * @return
+    *         The class created from the context.
     */
   private def setScope(ctx: ParserRuleContext) = {
     val klass = ctxToKlass(ctx)
@@ -156,10 +188,13 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Sets the parameters for a method.
     *
     * @param method
+    *               The method to set parameters for.
     * @param ctx
-    * @return
+    *            The context associated with a case class constructor declaration.
+    *
     */
   def setMethodParameters(method: Method, ctx: MethodDeclContext) = {
     val parameterList = ctx.methodParam().map(ctxToMethodParam)
@@ -167,10 +202,13 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Sets the parameters for a case class constructor.
     *
     * @param method
+    *               The method to set parameters for.
     * @param ctx
-    * @return
+    *            The context associated with a case class contructor declaration.
+    *
     */
   def setConstructorParamters(method: Method, ctx: CaseClassDeclContext) = {
     val parameterList = ctx.caseProperty.map(ctxToCaseParam)
@@ -178,9 +216,12 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Converts a context into a method parameter.
     *
     * @param ctx
+    *            The context associated with a method parameter.
     * @return
+    *         A method parameter.
     */
   private def ctxToMethodParam(ctx: MethodParamContext) = {
     val typeName = ctx.`type`().getText
@@ -195,11 +236,15 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Converts a case property context to a name -> symbol pair.
     *
     * @param ctx
+    *            The context associated with a case constructor property parameter.
     * @return
+    *         A pair defined: (param symbol name, the symbol).
+    *
     */
-  private def ctxToCaseParam(ctx: CasePropertyContext) = {
+  private def ctxToCaseParam(ctx: CasePropertyContext): (String, PropertySymbol) = {
     val typeName = ctx.`type`().getText
     val klassOpt = klassMap get typeName
 
@@ -212,9 +257,12 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Gets the klass associated with a klass context.
     *
     * @param ctx
+    *            The context associated with a klass
     * @return
+    *         A klass if one exists with an id in the context.
     */
   private def ctxToKlass(ctx: ParserRuleContext): Option[Klass] = {
     ctx match {
@@ -235,10 +283,14 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Gets the super klass of a klass if it exists.
     *
     * @param klass
+    *              The klass which should have a super klass it inherits from.
     * @param ctx
+    *            The context associated with the klass.
     * @return
+    *         The super klass of a klass if it exists.
     */
   private def getSuperKlass(klass: Klass)(implicit ctx: ChildClassContext): Option[Klass] = {
     val superKlassName = ctx.ID(1).getText
@@ -246,9 +298,13 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   }
 
   /**
+    * Creates and sets the constructor for a case klass. The symbol for the constructor method
+    * is created then added to the scope of the case klass.
     *
     * @param caseKlassType
+    *                       The type of the case klass.
     * @param ctx
+    *            The context associated with a case klass.
     */
   private def setCaseKlassContructor(caseKlassType: Klass, ctx: CaseClassDeclContext) = {
     val methodName = Method.getSignatureSimple(ctx)
@@ -262,16 +318,10 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
 }
 
 object SymbolDeclarator {
-  /**
-    *
-    * @param ctx
-    *            The context associated with a main class.
-    * @return
-    */
-  def getKlass(ctx: MainClassContext): Boolean = ctx.ID.size() > 1
 
   /**
     * Throws an invalid state err. For debugging purposes only.
+    *
     * @throws RuntimeException
     *         Thrown if called
     */

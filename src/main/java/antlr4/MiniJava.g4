@@ -38,43 +38,61 @@ statement
         # printToConsole
   |   ID '=' expr ';'
         # varDefinition
-  |   ID '[' (INT | ID) ']' '=' expr ';'
+  |   ID '[' expr ']' '=' expr ';'
         # arrayDefinition
-  |   'while' '(' condExpr ')' statement
+  |   'while' '(' expr ')' statement
         # whileLoopHead
-  |   'if' '(' condExpr ')' statement 'else' statement
+  |   'if' '(' expr ')' statement 'else' statement
         # ifStatement
   ;
-condExpr
-  :   '(' condExpr ')'
-  # parenExpr
-  |   '!' condExpr
-  # notExpr
-  |   condExpr '<' condExpr
-  # lessThanExpr
-  |   condExpr '&&' condExpr
-  # andExpr
-  |   expr
-  # notBoolExpr
-  ;
+
 expr
-  :   atom ( '+' atom | '-' atom | '*' atom )*
-  |   ('+' | '-') atom
+  : expr '+' expr
+  # plusExpression
+  |   expr '-' expr
+  # subtractExpression
+  |   expr '*' expr
+  # multiplyExpression
   |   atom '[' expr ']'
-  |   atom '.' 'length'
-  |   atom '.' ID '(' ( condExpr ( ',' condExpr )* )? ')'
+  # arrayAccessExpression
+  |   expr '.' 'length'
+  # arrLenExpression
+  |   expr '.' ID '(' ( expr ( ',' expr )* )? ')'
+  # methodCallExpression
+  | '(' expr ')'
+  # parenExpr
+  |   '!' expr
+  # notExpr
+  |   expr '<' expr
+  # lessThanExpr
+  |   expr '>' expr
+  # greaterThanExpr
+  |   expr '&&' expr
+  # andExpr
+  |   atom
+  # atomExpr
   ;
-atom : ( INT
-  | (ID | 'this') ('.' ID '(' expr ')')?
+
+atom :
+  INT_LIT
+  # intLiteral
+  | (ID | 'this')
+  # idLiteral
+  | (ID | 'this') '.' ID '(' expr ')'
+  # methodCall
   | 'new' ID '(' ')'
+  # constructorCall
   | 'this'
+  # thisCall
   | 'new' 'int' '[' expr ']'
-  | '(' expr ')')
+  # integerArr
+  | BOOLEAN_LIT
+  # booleanLit
   ;
 
 ID        :   [a-zA-Z_][a-zA-Z0-9_]*;
-INT       :   '0'..'9'+ ;
-BOOLEAN   :   ('true' | 'false') ;
+INT_LIT       :   '0'..'9'+ ;
+BOOLEAN_LIT   :   ('true' | 'false') ;
 WS        :   [ \t\r\n]+ -> skip ;
 COMMENT   : '/*' .*? '*/' -> skip ;
 LINE_COMMENT

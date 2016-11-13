@@ -8,6 +8,7 @@ class BinarySearch{
 // using Binary Search
 class BS{
     int[] number ;
+    int val;
     int size ;
 
     // Invoke methods to initialize, print and search
