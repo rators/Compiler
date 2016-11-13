@@ -1,6 +1,6 @@
-package compiler.typecheck
+package compiler.typecheck.utils
 
-import compiler.scope.Klass
+import compiler.typecheck.scope.Klass
 
 import scala.util.{Failure, Success, Try}
 
@@ -26,6 +26,8 @@ class KlassMap extends {
         Success(klass)
     }
   }
+
+  def get(name: String) = klassMap get name
 
   override def toString = klassMap.toString
 }

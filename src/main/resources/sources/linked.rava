@@ -4,14 +4,18 @@ class LinkedList{
     }
 }
 
-class Element {
-    int Age ;
+class BumbleBee {
+    int Age;
+}
+
+class Element extends BumbleBee {
+    int Age;
     int Salary ;
     boolean Married ;
 
     // Initialize some class variables
     public boolean Init(int v_Age, int v_Salary, boolean v_Married){
-	Age v_Age ;
+	Age = v_Age ;
 	Salary = v_Salary ;
 	Married = v_Married ;
 	return true ;
@@ -275,3 +279,5 @@ class LL{
     }
 
 }
+
+case class Algebra(int a, int b);

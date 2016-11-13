@@ -1,9 +1,9 @@
-package compiler.typecheck
+package compiler.typecheck.listener
 
 import antlr4.MiniJavaBaseListener
 import antlr4.MiniJavaParser._
-import compiler.Logger
-import compiler.scope.Klass
+import compiler.typecheck.scope.Klass
+import compiler.typecheck.utils.{DuplicateClassErr, KlassMap}
 
 import scala.util.{Failure, Success}
 
@@ -34,7 +34,6 @@ class KlassDeclarator extends MiniJavaBaseListener {
       case Success(s) => println(s"Class $name successfully added")
     }
   }
-
 
   override def enterMainClass(ctx: MainClassContext): Unit = {
     val name = ctx.ID(0).getText

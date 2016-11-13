@@ -1,6 +1,7 @@
-package compiler.scope
-import compiler.Symbol
+package compiler.typecheck.scope
 import Scope.SymbolMap
+import compiler.typecheck.symbol.Symbol
+
 /**
   * A class representing a block scope.
   */
@@ -29,7 +30,7 @@ class Block(_parentScope: Scope) extends Scope {
 
   /**
     * Searches for the symbol associated with the name parameter
-    * in this scope and all scopes enclosed within this scope.
+    * in this scope and all scopes enclosed within this scope recursively.
     *
     * @param name
     * The name of some symbol.

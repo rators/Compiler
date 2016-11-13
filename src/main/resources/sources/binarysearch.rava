@@ -143,4 +143,4 @@ class BS{
 
 }
 
-case class Hello(int a);
+case class GoodBye(int a);

@@ -1,6 +1,6 @@
-package compiler.scope
+package compiler.typecheck.scope
 
-import compiler.Symbol
+import compiler.typecheck.symbol.Symbol
 
 import scala.collection.mutable
 
@@ -16,7 +16,7 @@ trait Scope {
   /**
     * Some enclosing scope for this scope if one exists.
     */
-  val parentScope: Option[Scope]
+  def parentScope: Option[Scope]
 
   /**
     * Define a symbol within this scope.
@@ -72,13 +72,13 @@ trait Scope {
     * @return
     * A set of symbols initialized in this scope.
     */
-  def initVars: Set[Symbol]
+  def initVars : Set[Symbol]
 }
 
 object Scope {
+  type LinkedSymbolMap = mutable.LinkedHashMap[String, Symbol]
   type SymbolMap = mutable.HashMap[String, Symbol]
   implicit class SymbolMapImpl(val symbolMap: SymbolMap){
     def +=(entry: (String, Symbol)): Unit = symbolMap.put(entry._1, entry._2)
   }
-
 }

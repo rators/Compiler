@@ -1,18 +1,24 @@
-package compiler.scope
+package compiler.typecheck.scope
 
-import java.util
-
-import compiler.Symbol
 import Scope.SymbolMap
-import org.antlr.v4.runtime.tree.TerminalNode
+import compiler.typecheck.symbol.Symbol
 
 /**
   * The object representing all classes during semantic analysis and synthesis.
   */
-class Klass(override val name: String, val superClass: Option[Klass]) extends Scope {
+class Klass(override val name: String, var _superKlass: Option[Klass] = None) extends Scope {
   val symbolTable = new SymbolMap()
 
-  override val parentScope: Option[Scope] = None
+  override def parentScope: Option[Klass] = _superKlass
+
+  def superKlass_=(klass: Option[Klass]) = {
+    _superKlass match  {
+      case None => _superKlass = klass
+      case Some(_) => throw new RuntimeException("Cannot set super klass more than once.")
+    }
+  }
+
+  def superKlass = _superKlass
 
   //utility method to make things less ugly :( ...
   def defSymbol(e: (String, Symbol)): Option[Symbol] = symbolTable.put(e._1, e._2)
@@ -50,7 +56,7 @@ class Klass(override val name: String, val superClass: Option[Klass]) extends Sc
 
     while (result.isEmpty && currKlass.isDefined) {
       result = currKlass.get.symbolTable.get(name)
-      currKlass = currKlass.get.superClass
+      currKlass = currKlass.get.superKlass
     }
 
     result

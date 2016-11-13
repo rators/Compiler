@@ -5,9 +5,11 @@ import java.io.{File, FileInputStream}
 import antlr4.MiniJavaParser.ProgContext
 import antlr4.{MiniJavaBaseListener, MiniJavaLexer, MiniJavaParser}
 import compiler.CompilerImpl._
-import compiler.typecheck.KlassDeclarator
+import compiler.typecheck.listener.{KlassDeclarator, SymbolDeclarator}
+import compiler.typecheck.scope.Scope
+import compiler.typecheck.utils.KlassMap
 import org.antlr.v4.runtime._
-import org.antlr.v4.runtime.tree.ParseTreeWalker
+import org.antlr.v4.runtime.tree.{ParseTreeProperty, ParseTreeWalker}
 
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success, Try}
@@ -30,7 +32,12 @@ object Phase1 extends App {
 
     //run the parser starting at the root rule `prog`
     Try(parser.prog()) match {
-      case Success(progContext) => walkThrough(progContext)
+      case Success(progContext) =>
+        walkThrough(progContext)
+        val klassMap = klassDeclWalk(progContext)
+        val scope = new ParseTreeProperty[Scope]()
+        symbolDeclWalk(klassMap, scope, progContext)
+        println(s"Updated klass map is $klassMap")
       case Failure(e) => System.err.println(s"COMPILER ERR -- $e")
     }
   }
@@ -39,8 +46,20 @@ object Phase1 extends App {
     val walker = new ParseTreeWalker()
 
     walker.walk(new MiniJavaBaseListener(), parseTree)
+  }
+
+  def klassDeclWalk(parseTree: ProgContext): KlassMap = {
+    val walker = new ParseTreeWalker()
 
     val klassDeclarator = new KlassDeclarator()
+    walker.walk(klassDeclarator, parseTree)
+    klassDeclarator.klassMap
+  }
+
+  def symbolDeclWalk(klassMap: KlassMap, scopes: ParseTreeProperty[Scope], parseTree: ProgContext): Unit = {
+    val walker = new ParseTreeWalker()
+
+    val klassDeclarator = new SymbolDeclarator(klassMap, scopes, null)
     walker.walk(klassDeclarator, parseTree)
     println(klassDeclarator.klassMap)
   }
