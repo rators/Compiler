@@ -7,21 +7,24 @@ mainClass
                 '(' 'String' '[' ']' ID ')' '{' varDecl* statement* '}' '}'
   ;
 classDecl
-  :   'class' ID '{' varDecl* methodDecl* '}'
+  :   'class' ID '{' propertyDecl* methodDecl* '}'
         # baseClass
-  |   'class' ID 'extends' ID '{' varDecl* methodDecl* '}'
+  |   'class' ID 'extends' ID '{' propertyDecl* methodDecl* '}'
         # childClass
-  |   'case' 'class' ID '(' (formalList (',' formalList+)*)? ')' ';'
+  |   'case' 'class' ID '(' (caseProperty (',' caseProperty+)*)? ')' ';'
         # caseClassDecl
         ;
 varDecl : type ID ';'
         ;
-methodDecl
-  :   'public' type ID '(' (formalList (',' formalList+)*)? ')'
-                '{' varDecl* statement* 'return' expr ';' '}'
+propertyDecl : type ID ';'
         ;
-formalList
-  :   type ID
+methodDecl :
+        'public' type ID '(' (methodParam (',' methodParam+)*)? ')'
+        '{' varDecl* statement* 'return' expr ';' '}'
+        ;
+methodParam : type ID
+        ;
+caseProperty: type ID
         ;
 type  :   'int'
   |   'int' '[' ']'
@@ -30,11 +33,17 @@ type  :   'int'
         ;
 statement
   :   '{' statement* '}'
+        # basicBlock
   |   'System.out.println' '(' expr ')' ';'
+        # printToConsole
   |   ID '=' expr ';'
+        # varDefinition
   |   ID '[' (INT | ID) ']' '=' expr ';'
+        # arrayDefinition
   |   'while' '(' condExpr ')' statement
+        # whileLoopHead
   |   'if' '(' condExpr ')' statement 'else' statement
+        # ifStatement
   ;
 condExpr
   :   '(' condExpr ')'
