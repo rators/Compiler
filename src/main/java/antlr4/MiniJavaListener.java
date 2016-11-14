@@ -196,75 +196,149 @@ public interface MiniJavaListener extends ParseTreeListener {
 	 */
 	void exitIfStatement(MiniJavaParser.IfStatementContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code greaterThanExpr}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterGreaterThanExpr(MiniJavaParser.GreaterThanExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code greaterThanExpr}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitGreaterThanExpr(MiniJavaParser.GreaterThanExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code arrLenExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterArrLenExpression(MiniJavaParser.ArrLenExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code arrLenExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitArrLenExpression(MiniJavaParser.ArrLenExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code arrayAccessExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterArrayAccessExpression(MiniJavaParser.ArrayAccessExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code arrayAccessExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitArrayAccessExpression(MiniJavaParser.ArrayAccessExpressionContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code notExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void enterNotExpr(MiniJavaParser.NotExprContext ctx);
 	/**
 	 * Exit a parse tree produced by the {@code notExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void exitNotExpr(MiniJavaParser.NotExprContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code subtractExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterSubtractExpression(MiniJavaParser.SubtractExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code subtractExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitSubtractExpression(MiniJavaParser.SubtractExpressionContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code lessThanExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void enterLessThanExpr(MiniJavaParser.LessThanExprContext ctx);
 	/**
 	 * Exit a parse tree produced by the {@code lessThanExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void exitLessThanExpr(MiniJavaParser.LessThanExprContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code atomExpr}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterAtomExpr(MiniJavaParser.AtomExprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code atomExpr}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitAtomExpr(MiniJavaParser.AtomExprContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code methodCallExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterMethodCallExpression(MiniJavaParser.MethodCallExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code methodCallExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitMethodCallExpression(MiniJavaParser.MethodCallExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code plusExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterPlusExpression(MiniJavaParser.PlusExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code plusExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitPlusExpression(MiniJavaParser.PlusExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code multiplyExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterMultiplyExpression(MiniJavaParser.MultiplyExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code multiplyExpression}
+	 * labeled alternative in {@link MiniJavaParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitMultiplyExpression(MiniJavaParser.MultiplyExpressionContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code parenExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void enterParenExpr(MiniJavaParser.ParenExprContext ctx);
 	/**
 	 * Exit a parse tree produced by the {@code parenExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void exitParenExpr(MiniJavaParser.ParenExprContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code notBoolExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
-	 * @param ctx the parse tree
-	 */
-	void enterNotBoolExpr(MiniJavaParser.NotBoolExprContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code notBoolExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
-	 * @param ctx the parse tree
-	 */
-	void exitNotBoolExpr(MiniJavaParser.NotBoolExprContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code andExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void enterAndExpr(MiniJavaParser.AndExprContext ctx);
 	/**
 	 * Exit a parse tree produced by the {@code andExpr}
-	 * labeled alternative in {@link MiniJavaParser#condExpr}.
+	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree
 	 */
 	void exitAndExpr(MiniJavaParser.AndExprContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MiniJavaParser#expr}.
-	 * @param ctx the parse tree
-	 */
-	void enterExpr(MiniJavaParser.ExprContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MiniJavaParser#expr}.
-	 * @param ctx the parse tree
-	 */
-	void exitExpr(MiniJavaParser.ExprContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code intLiteral}
 	 * labeled alternative in {@link MiniJavaParser#atom}.
@@ -337,18 +411,6 @@ public interface MiniJavaListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIntegerArr(MiniJavaParser.IntegerArrContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code parenExpression}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void enterParenExpression(MiniJavaParser.ParenExpressionContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code parenExpression}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void exitParenExpression(MiniJavaParser.ParenExpressionContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code booleanLit}
 	 * labeled alternative in {@link MiniJavaParser#atom}.

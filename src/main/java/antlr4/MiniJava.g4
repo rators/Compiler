@@ -76,7 +76,7 @@ expr
 atom :
   INT_LIT
   # intLiteral
-  | (ID | 'this')
+  | ID
   # idLiteral
   | (ID | 'this') '.' ID '(' expr ')'
   # methodCall

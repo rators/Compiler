@@ -6,7 +6,7 @@ import compiler.typecheck.symbol.Symbol
 /**
   * The object representing all classes during semantic analysis and synthesis.
   */
-class Klass(override val name: String, var _superKlass: Option[Klass] = None) extends Scope {
+case class Klass(override val name: String, var _superKlass: Option[Klass] = None) extends Scope {
   val symbolTable = new SymbolMap()
 
   override def parentScope: Option[Klass] = _superKlass
