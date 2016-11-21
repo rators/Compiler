@@ -1,4 +1,4 @@
-// Generated from C:/Users/rotorres/IdeaProjects/Compiler/src/main/java/antlr4\MiniJava.g4 by ANTLR 4.5.3
+// Generated from /Users/rtorres/IdeaProjects/Compiler/src/main/java/antlr4/MiniJava.g4 by ANTLR 4.5.3
 package antlr4;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

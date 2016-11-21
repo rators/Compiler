@@ -11,7 +11,7 @@ class Method(override val name: String, override val kType: Klass, val ownerKlas
   val locals = new SymbolMap()
   val initializedVariables = new SymbolMap()
 
-  override val parentScope = Some(ownerKlass)
+  override val parentScope:Option[Scope] = Some(ownerKlass)
 
   /**
     * Define a symbol within this scope.

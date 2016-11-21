@@ -89,8 +89,7 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
     * @return
     * A set of symbols initialized in this scope.
     */
-  override def initVars: Set[Symbol] =
-  throw new AssertionError("Initialized variables are not the responsibility of theKlass object")
+  override def initVars: Set[Symbol] = symbolTable.values.toSet
 
   override def toString = s"Klass($name, $parentScope)"
 }

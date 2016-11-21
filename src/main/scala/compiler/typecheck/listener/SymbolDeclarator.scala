@@ -1,5 +1,7 @@
 package compiler.typecheck.listener
 
+import javax.swing.JTextField
+
 import antlr4.MiniJavaParser._
 import antlr4.{MiniJavaBaseListener, MiniJavaParser}
 import compiler.typecheck.scope.Scope.LinkedSymbolMap
@@ -100,7 +102,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
       case None => SymbolDeclarator.throwInvalidStateErr
       case Some(klassType) =>
         val methodName = Method.getSignatureSimple(ctx)
-
+        println("Declaring method symbol in klass")
         currentScope match {
           case None => SymbolDeclarator.throwInvalidStateErr
           case Some(methodParent: Klass) =>
@@ -109,6 +111,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
                 val method = new Method(methodName, klassType, methodParent, new LinkedSymbolMap())
                 setMethodParameters(method, ctx)
                 methodParent define method
+                println("Method parent is: " + methodParent)
                 println(s"Method name: ${method.name} ${method.paramDefs.map((x) => x._2.kType)}")
                 setScope(method)(ctx)
               case Some(alreadyDecl) => SymbolDeclarator.throwInvalidStateErr
@@ -309,7 +312,6 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   private def setCaseKlassContructor(caseKlassType: Klass, ctx: CaseClassDeclContext) = {
     val methodName = Method.getSignatureSimple(ctx)
     val method = new Method(methodName, caseKlassType, caseKlassType, new LinkedSymbolMap())
-
     setConstructorParamters(method, ctx)
     println(s"Method name: ${method.name} ${method.paramDefs.map((x) => x._2.kType)}")
 

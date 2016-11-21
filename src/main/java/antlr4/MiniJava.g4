@@ -78,7 +78,7 @@ atom :
   # intLiteral
   | ID
   # idLiteral
-  | (ID | 'this') '.' ID '(' expr ')'
+  | THIS '.' ID '(' expr ')'
   # methodCall
   | 'new' ID '(' ')'
   # constructorCall
@@ -97,3 +97,4 @@ WS        :   [ \t\r\n]+ -> skip ;
 COMMENT   : '/*' .*? '*/' -> skip ;
 LINE_COMMENT
           : '//' .*? '\r'? '\n' -> skip;
+THIS: (ID | 'this');

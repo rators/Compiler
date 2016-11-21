@@ -40,8 +40,8 @@ object Main extends App {
         val klassMap = klassDeclWalk(progContext)
         val scope = new ParseTreeProperty[Scope]()
         symbolDeclWalk(klassMap, scope, progContext)
+        println("Binary search symbol table: " + klassMap.get("BinarySearch").get.symbolTable)
         typeCheckWalk(klassMap, scope, progContext)
-        println(s"Updated klass map is $klassMap")
       case Failure(e) => System.err.println(s"COMPILER ERR -- $e")
     }
   }
@@ -71,8 +71,10 @@ object Main extends App {
   def typeCheckWalk(klassMap: KlassMap, scopes: ParseTreeProperty[Scope], parseTree: ProgContext): Unit = {
     val walker = new ParseTreeWalker()
     val callerTypes = new ParseTreeProperty[Klass]()
-    val typeChecker = new TypeChecker(klassMap, scopes, callerTypes,null)
+    val typeChecker = new TypeChecker(klassMap, scopes, callerTypes, null)
+    println("Type checker method call.")
     typeChecker.visit(parseTree)
+    typeChecker.visitProg(parseTree)
   }
 
   def fileToStream(resourcePath: String): CharStream = {
