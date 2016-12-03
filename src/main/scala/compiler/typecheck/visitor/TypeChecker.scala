@@ -2,18 +2,17 @@ package compiler.typecheck.visitor
 
 import antlr4.MiniJavaParser._
 import antlr4.{MiniJavaBaseVisitor, MiniJavaParser}
+import compiler.typecheck.error._
 import compiler.typecheck.scope.{Block, Klass, Method, Scope}
 import compiler.typecheck.utils.KlassMap
-import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.{ParserRuleContext, Token}
 import org.antlr.v4.runtime.tree.{ParseTreeProperty, TerminalNode}
-import scala.annotation.tailrec
+import compiler.typecheck.scope.Scope
+import compiler.typecheck.symbol._
 
+import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 
-/**
-  * TODO method parameter type checking. Unit testing. complete scala doc creation.
-  *
-  */
 class TypeChecker(
                    val klassMap: KlassMap, val scopes: ParseTreeProperty[Scope],
                    val callerTypes: ParseTreeProperty[Klass], parser: MiniJavaParser
@@ -23,17 +22,14 @@ class TypeChecker(
   implicit val _map = klassMap
 
   override def visitMainClass(ctx: MainClassContext): Klass = {
-    println("Main class")
     null
   }
 
   override def visitBaseClass(ctx: BaseClassContext): Klass = {
-    println("Enter base class")
     enterScope(ctx)
   }
 
   override def visitChildClass(ctx: ChildClassContext): Klass = {
-    println("Enter child class.")
     enterScope(ctx)
   }
 
@@ -42,10 +38,9 @@ class TypeChecker(
   override def visitParenExpr(ctx: ParenExprContext): Klass = visit(ctx.expr())
 
   override def visitType(ctx: TypeContext): Klass = {
-    println("visit type")
     Option(ctx.ID) match {
       case None => klassMap get ctx.getText match {
-        case None => throw new AssertionError(s"Unresolved symbol ${ctx.getText}")
+        case None => throw UnresolvedSymbolError(ctx.getText, ctx.ID().getSymbol)
         case Some(klass) => klass
       }
       case identifier: Some[TerminalNode] =>
@@ -57,68 +52,74 @@ class TypeChecker(
   }
 
   override def visitMethodDecl(ctx: MethodDeclContext): Klass = {
-    println("Enter method declaration.")
     val sigTypeName = ctx.`type`().getText
     currScope = Option(scopes get ctx)
+
     visitChildren(ctx)
+
     klassMap get sigTypeName match {
-      case Some(sigType) =>
-        sigType // note done
+      case Some(sigType) => sigType
     }
   }
 
   override def visitVarDefinition(ctx: VarDefinitionContext): Klass = {
-    println("Visit var defintion")
     currScope match {
       case None => throw new AssertionError("Invalid type checker state.")
       case Some(scope) =>
         val varName = ctx.ID().getSymbol.getText
-        println("Variable name: " + varName)
-        println("Initialized vars: " + scope.name)
         scope.deepFind(varName) match {
-          case None => throw new AssertionError(s"Unresolved symbol $varName")
+          case None => throw UnresolvedSymbolError(ctx.ID().getText, ctx.ID().getSymbol)
           case Some(leftSymbol) =>
             val leftType = leftSymbol.kType
-            println("Type is: " + leftType)
-            println((ctx.expr()))
-            println(ctx.getText)
             visit(ctx.expr()) match {
-              case Klass(leftType.name, _) => null
-              case Klass(rightName, _) => throw new AssertionError(s"Incompatible types: ${leftType.name} and $rightName")
+              case Klass(leftType.name, _) => leftType
+              case rightType: Klass =>
+                val typeErr = InvalidVarDefinition(leftType.name, rightType.name, ctx.getStop)
+
+                if (rightType <| leftType) {
+
+                  rightType
+                } else throw typeErr
             }
         }
+    }
+  }
+
+  def initialize(symbol: Symbol): Unit = {
+    currScope match {
+      case None => throw new AssertionError("Invalid type checker state.")
+      case Some(scope) => scope.initialize(symbol)
     }
   }
 
   override def visitMultiplyExpression(ctx: MultiplyExpressionContext): Klass = {
     val leftType = visit(ctx.expr(0))
     val rightType = visit(ctx.expr(1))
-    TypeChecker.binaryOperatorCheck(leftType, rightType, "*")
+    TypeChecker.binaryOperatorCheck(leftType, rightType, ctx.MULT.getSymbol, "*")
   }
 
   override def visitSubtractExpression(ctx: SubtractExpressionContext): Klass = {
     val leftType = visit(ctx.expr(0))
     val rightType = visit(ctx.expr(1))
-    TypeChecker.binaryOperatorCheck(leftType, rightType, "-")
+    TypeChecker.binaryOperatorCheck(leftType, rightType, ctx.MINUS.getSymbol, "-")
   }
 
   override def visitPlusExpression(ctx: PlusExpressionContext): Klass = {
-    println("Visit plus")
     val leftType = visit(ctx.expr(0))
     val rightType = visit(ctx.expr(1))
-    TypeChecker.binaryOperatorCheck(leftType, rightType, "+")
+    TypeChecker.binaryOperatorCheck(leftType, rightType, ctx.PLUS.getSymbol, "+")
   }
 
   override def visitLessThanExpr(ctx: LessThanExprContext): Klass = {
     val leftType = visit(ctx.expr(0))
     val rightType = visit(ctx.expr(1))
-    TypeChecker.binaryOperatorCheckBool(leftType, rightType, "<")
+    TypeChecker.binaryOperatorCheckBool(leftType, rightType, ctx.LESS_THAN.getSymbol, "<")
   }
 
   override def visitGreaterThanExpr(ctx: GreaterThanExprContext): Klass = {
     val leftType = visit(ctx.expr(0))
     val rightType = visit(ctx.expr(1))
-    TypeChecker.binaryOperatorCheckBool(leftType, rightType, ">")
+    TypeChecker.binaryOperatorCheckBool(leftType, rightType, ctx.GREAT_THAN.getSymbol, ">")
   }
 
   override def visitArrayAccessExpression(ctx: ArrayAccessExpressionContext): Klass = {
@@ -128,18 +129,17 @@ class TypeChecker(
     arrType match {
       case Klass("int[]", _) => indexType match {
         case Klass("int", _) => klassMap get "int" get
-        case Klass(actual, _) => throw new AssertionError(s"Required an int but found an $actual")
+        case Klass(actual, _) => throw InvalidArrayIndexType(actual, ctx.expr().getStart)
       }
-      case Klass(actual, _) => throw new AssertionError(s"Invalid array type $actual")
+      case actual: Klass => throw InvalidType(actual, klassMap get "int[]" get, ctx.atom().getStart)
     }
-
   }
 
   override def visitArrLenExpression(ctx: ArrLenExpressionContext): Klass = {
     val intArr = visit(ctx.expr())
     intArr match {
       case Klass("int[]", _) => klassMap get "int" get
-      case Klass(actual, _) => throw new AssertionError(s"Invalid operand type $actual for .length")
+      case actual: Klass => throw InvalidType(actual, klassMap get "int[]" get, ctx.expr().getStart)
     }
   }
 
@@ -167,7 +167,7 @@ class TypeChecker(
         case None => symbolName match {
           case "true" => klassMap get "boolean" get
           case "false" => klassMap get "boolean" get
-          case _ =>throw new AssertionError(s"Symbol $symbolName not found.")
+          case _ => throw UnresolvedSymbolError(symbolName, ctx.getStart)
         }
         case Some(symbol) => symbol.kType
       }
@@ -179,7 +179,7 @@ class TypeChecker(
 
     sizeType match {
       case Klass("int", _) => klassMap get "int[]" get
-      case Klass(actual, _) => throw new AssertionError(s"Array size must be an int, found $actual")
+      case Klass(actual, _) => throw InvalidArrayIndexType(actual, ctx.expr().getStop)
     }
   }
 
@@ -187,7 +187,7 @@ class TypeChecker(
     val klassType = klassMap get ctx.ID().getText
 
     klassType match {
-      case None => throw new AssertionError(s"Symbol ${ctx.ID().getText} not found.")
+      case None => throw UnresolvedSymbolError(ctx.ID().getSymbol.getText, ctx.ID().getSymbol)
       case Some(klass) => klass
     }
   }
@@ -196,65 +196,47 @@ class TypeChecker(
     val bool: Klass = visit(ctx.expr())
     bool match {
       case Klass("boolean", _) => bool
-      case _ => throw new AssertionError(s"Invalid type: ${bool.name} for unary operator '!'.")
-    }
-  }
-
-  override def visitMethodCall(ctx: MethodCallContext): Klass = {
-    val symbolID = ctx.THIS().getText
-    println("Visit method call! ")
-    symbolID match {
-      case "this" => scopes get ctx match {
-        case method: Method =>
-          val klass = method.ownerKlass
-          val methodName = ctx.ID.getText
-          klass.deepFind(methodName) match {
-            case None => throw new AssertionError(s"Symbol $methodName not found.")
-            case Some(symbol) =>
-              symbol.kType
-          }
-      }
+      case k: Klass => throw UnaryOperatorError(k, ctx.expr().getStart)
     }
   }
 
   override def visitMethodCallExpression(ctx: MethodCallExpressionContext): Klass = {
-    val symbolID = ctx.ID.getText
-    println("Visit method call! ")
-    symbolID match {
-      case "this" => scopes get ctx match {
-        case method: Method =>
-          println("In this case!")
-          val klass = method.ownerKlass
-          val methodName = ctx.ID.getText
-          klass.deepFind(methodName) match {
-            case None => throw new AssertionError(s"Symbol $methodName not found.")
-            case Some(symbol) =>
-              symbol.kType
-          }
-      }
-      case symbol =>
-        println("Symbol: " + symbol)
-        println("retreive check?: " + getEnclosingKlass(currScope))
-        val scope = getEnclosingKlass(currScope)
-        println("symbol table" + scope.symbolTable)
-        println("The emthod type is: " + currScope.get)
-        scope.symbolTable(s"${symbol}()").kType
+    val targetsType: Klass = visit(ctx.expr(0))
+    val methodName = ctx.ID.getText
+
+    targetsType.deepFind(methodName) match {
+      case Some(method: Method) => handleMethodCall(ctx, method)
+      case _ => throw UnresolvedSymbolError(methodName, ctx.ID.getSymbol)
+    }
+  }
+
+  def handleMethodCall(ctx: MethodCallExpressionContext, method: Method): Klass = {
+    val actualTypes: List[Klass] = ctx.expr().tail
+      .map(visit).toList
+
+    val expectedTypes: List[Klass] = method.argsDefList.toList
+
+    val check: List[Boolean] = actualTypes.zip(expectedTypes)
+      .map((pair) => pair._1 <| pair._2)
+
+    check.contains(false) || actualTypes.length != expectedTypes.length match {
+      case true => throw InvalidArgumentsList(method, expectedTypes, actualTypes, ctx.getStart)
+      case false => method.kType
     }
   }
 
   /**
+    * Gets the enclosing klass for a scope.
     *
     * @param scope
+    * A scope.
     * @return
+    * The enclosing class for this scope.
     */
   @tailrec private def getEnclosingKlass(scope: Option[Scope]): Klass = {
     scope match {
-      case Some(method: Method) =>
-        val methodScope: Method = method
-        getEnclosingKlass(methodScope.parentScope)
-      case Some(block: Block) =>
-        val blockScope: Block = block
-        getEnclosingKlass(blockScope.parentScope)
+      case Some(method: Method) => getEnclosingKlass(method.parentScope)
+      case Some(block: Block) => getEnclosingKlass(block.parentScope)
       case Some(klass: Klass) => klass
       case _ => throw new AssertionError("Invalid type checker state.")
     }
@@ -262,11 +244,9 @@ class TypeChecker(
 
   private def enterScope(ctx: ParserRuleContext) = {
     currScope = Option(scopes get ctx)
-    println("Enter scope")
     currScope = currScope match {
       case None => throw new AssertionError("Invalid type checker state.")
       case Some(scope) =>
-        println("Enter scope")
         visitChildren(ctx) //run type check visitor on children
         scope.parentScope
     }
@@ -275,17 +255,17 @@ class TypeChecker(
 }
 
 object TypeChecker {
-  def binaryOperatorCheck(leftType: Klass, rightType: Klass, operand: String)(implicit klassMap: KlassMap): Klass = {
+  def binaryOperatorCheck(leftType: Klass, rightType: Klass, offender: Token, operand: String)(implicit klassMap: KlassMap): Klass = {
     (leftType, rightType) match {
       case (Klass("int", _), Klass("int", _)) => klassMap get "int" get
-      case _ => throw new AssertionError(s"Invalid types (${leftType.name}, ${rightType.name}) for operator $operand")
+      case _ => throw BinaryOperatorError(leftType, rightType, offender, operand)
     }
   }
 
-  def binaryOperatorCheckBool(leftType: Klass, rightType: Klass, operand: String)(implicit klassMap: KlassMap): Klass = {
+  def binaryOperatorCheckBool(leftType: Klass, rightType: Klass, offender: Token, operand: String)(implicit klassMap: KlassMap): Klass = {
     (leftType, rightType) match {
       case (Klass("int", _), Klass("int", _)) => klassMap get "boolean" get
-      case _ => throw new AssertionError(s"Invalid types (${leftType.name}, ${rightType.name}) for operator $operand")
+      case _ => throw BinaryOperatorError(leftType, rightType, offender, operand)
     }
   }
 }

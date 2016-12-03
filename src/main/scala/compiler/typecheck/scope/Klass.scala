@@ -1,7 +1,11 @@
 package compiler.typecheck.scope
 
-import Scope.SymbolMap
+import compiler.typecheck.error.InvalidMethodOverload
+import compiler.typecheck.scope.Scope.SymbolMap
 import compiler.typecheck.symbol.Symbol
+import org.antlr.v4.runtime.Token
+
+import scala.util.{Failure, Success, Try}
 
 /**
   * The object representing all classes during semantic analysis and synthesis.
@@ -12,7 +16,7 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
   override def parentScope: Option[Klass] = _superKlass
 
   def superKlass_=(klass: Option[Klass]) = {
-    _superKlass match  {
+    _superKlass match {
       case None => _superKlass = klass
       case Some(_) => throw new RuntimeException("Cannot set super klass more than once.")
     }
@@ -20,7 +24,6 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
 
   def superKlass = _superKlass
 
-  //utility method to make things less ugly :( ...
   def defSymbol(e: (String, Symbol)): Option[Symbol] = symbolTable.put(e._1, e._2)
 
   /**
@@ -92,9 +95,83 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
   override def initVars: Set[Symbol] = symbolTable.values.toSet
 
   override def toString = s"Klass($name, $parentScope)"
+
+  /**
+    * Covariance check method.
+    *
+    * @param other
+    * The class being compared to.
+    * @return
+    * True if this class is covariant with the other class
+    */
+  def <|(other: Klass): Boolean = parents contains other
+
+  /**
+    * Gets the parents for this class.
+    *
+    * @return
+    * The list parents.
+    */
+  private def parents: List[Klass] = getInheritors(Some(this))
+
+  /**
+    * Gets the inheritors for a class
+    *
+    * @param k
+    * Klass being compared to.
+    * @return
+    *
+    */
+  private def getInheritors(k: Option[Klass]): List[Klass] = {
+    k match {
+      case None => Nil
+      case Some(klass) => klass :: getInheritors(klass.parentScope)
+    }
+  }
+
+  def methods: List[Method] = getMethods(Some(this))
+
+  /**
+    * The methods contained in this class.
+    * @return
+    *         The methods.
+    */
+  def localMethods: List[Method] = symbolTable.values.filter((v) => v match {
+    case m: Method => true
+    case _ => false
+  }).map(_.asInstanceOf[Method]).toList
+
+  def getMethods(d: Option[Klass]): List[Method] = {
+    d match {
+      case None => Nil
+      case Some(k: Klass) => k.localMethods ::: getMethods(k.parentScope)
+    }
+  }
+
 }
 
 object Klass {
   def apply(name: String) = new Klass(name, None)
+
   def apply(name: String, parent: Klass) = new Klass(name, Some(parent))
+
+  def validMethodOverloading(child: Klass, parent: Klass, offender: Token): Try[Unit] = {
+    val childMethods = child.methods
+    val parentMethods = parent.methods
+
+    val overriddenMethods: Iterable[Method] = childMethods.filter((childMethod) => parentMethods.exists(_.name == childMethod.name))
+
+    val methodPairs = overriddenMethods.map((method) => method -> parentMethods.find(_.name == method.name).get)
+
+    val methodMatches = methodPairs.map((pair) => ((pair._1, pair._2), pair._1.signature == pair._2.signature))
+
+
+    val offenderOpt = methodMatches.find((v) => !v._2)
+
+    offenderOpt match {
+      case Some(((childMethod, parentMethod), false)) =>
+        Failure(InvalidMethodOverload(parentMethod, parentMethod.ownerKlass.asInstanceOf[Klass], childMethod.ownerKlass.asInstanceOf[Klass], offender))
+      case None => Success()
+    }
+  }
 }

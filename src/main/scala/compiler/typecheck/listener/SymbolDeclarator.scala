@@ -12,7 +12,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTreeProperty
 import compiler.typecheck.utils.AntlrConversions._
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConversions._
 
 /**
@@ -47,6 +47,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
       case None => SymbolDeclarator.throwInvalidStateErr
       case Some(superKlass) =>
         SymbolDeclarator.hasCycleParadox(ctx, childClass, childClass.parentScope)
+
         childClass.superKlass = parentKlass
     }
   }
@@ -80,14 +81,12 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
         currScope.shallowFind(symbolName) match {
           case None => klassMap get typeName match {
             case None =>
-              println(s"Symbol $typeName not found")
               SymbolDeclarator.throwInvalidStateErr
             case Some(symbolType) =>
               val varSymbol = PropertySymbol(symbolName, symbolType)
               currScope.define(varSymbol)
           }
           case Some(_) =>
-            println(s"Symbol $symbolName is already defined")
             SymbolDeclarator.throwInvalidStateErr
         }
     }
@@ -102,7 +101,6 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
       case None => SymbolDeclarator.throwInvalidStateErr
       case Some(klassType) =>
         val methodName = Method.getSignatureSimple(ctx)
-        println("Declaring method symbol in klass")
         currentScope match {
           case None => SymbolDeclarator.throwInvalidStateErr
           case Some(methodParent: Klass) =>
@@ -111,10 +109,8 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
                 val method = new Method(methodName, klassType, methodParent, new LinkedSymbolMap())
                 setMethodParameters(method, ctx)
                 methodParent define method
-                println("Method parent is: " + methodParent)
-                println(s"Method name: ${method.name} ${method.paramDefs.map((x) => x._2.kType)}")
                 setScope(method)(ctx)
-              case Some(alreadyDecl) => SymbolDeclarator.throwInvalidStateErr
+              case Some(alreadyDecl) => SymbolDeclarator.throwInvalidStateErr //invalid method override exception
             }
         }
     }
@@ -124,7 +120,13 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
 
   override def exitBasicBlock(ctx: BasicBlockContext): Unit = handleExitScope()
 
-  override def exitChildClass(ctx: ChildClassContext): Unit = handleExitScope()
+  override def exitChildClass(ctx: ChildClassContext): Unit = {
+    val currentChild = currentScope.get.asInstanceOf[Klass]
+    Klass.validMethodOverloading(currentChild, currentChild.parentScope.get, ctx.ID(0).getSymbol) match {
+      case Failure(e) => throw e
+      case _ => handleExitScope()
+    }
+  }
 
   override def exitMainClass(ctx: MainClassContext): Unit = handleExitScope()
 
@@ -213,7 +215,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
     *            The context associated with a case class contructor declaration.
     *
     */
-  def setConstructorParamters(method: Method, ctx: CaseClassDeclContext) = {
+  def setConstructorParameters(method: Method, ctx: CaseClassDeclContext) = {
     val parameterList = ctx.caseProperty.map(ctxToCaseParam)
     method.paramDefs ++= parameterList
   }
@@ -312,8 +314,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
   private def setCaseKlassContructor(caseKlassType: Klass, ctx: CaseClassDeclContext) = {
     val methodName = Method.getSignatureSimple(ctx)
     val method = new Method(methodName, caseKlassType, caseKlassType, new LinkedSymbolMap())
-    setConstructorParamters(method, ctx)
-    println(s"Method name: ${method.name} ${method.paramDefs.map((x) => x._2.kType)}")
+    setConstructorParameters(method, ctx)
 
     caseKlassType define method
   }

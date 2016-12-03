@@ -2,7 +2,10 @@ package compiler.typecheck.scope
 
 import antlr4.MiniJavaParser.{CaseClassDeclContext, MethodDeclContext}
 import compiler.typecheck.scope.Scope.{LinkedSymbolMap, SymbolMap}
-import compiler.typecheck.symbol.{SubSymbol, Symbol}
+import compiler.typecheck.symbol.{PropertySymbol, SubSymbol, Symbol}
+
+
+case class Signature(returnType: Klass, name: String, params: Method.Params)
 
 /**
   * The class associated with methods of type scope.
@@ -10,7 +13,6 @@ import compiler.typecheck.symbol.{SubSymbol, Symbol}
 class Method(override val name: String, override val kType: Klass, val ownerKlass: Scope, val paramDefs: LinkedSymbolMap) extends Scope with SubSymbol {
   val locals = new SymbolMap()
   val initializedVariables = new SymbolMap()
-
   override val parentScope:Option[Scope] = Some(ownerKlass)
 
   /**
@@ -96,10 +98,12 @@ class Method(override val name: String, override val kType: Klass, val ownerKlas
 
   override def toString = s"Method($locals, $initializedVariables, $name, $kType, $parentScope, $paramDefs)"
 
+  def signature = Signature(this.kType, name, paramDefs.map(_._2.asInstanceOf[PropertySymbol]).map(_.kType).toList)
 }
 
 object Method {
-  def getSignatureSimple(methodDeclContext: MethodDeclContext) = methodDeclContext.ID().getText concat "()"
-  def getSignatureSimple(methodDeclContext: CaseClassDeclContext) = methodDeclContext.ID().getText concat "()"
+  type Params = List[Klass]
 
+  def getSignatureSimple(methodDeclContext: MethodDeclContext) = methodDeclContext.ID().getText
+  def getSignatureSimple(methodDeclContext: CaseClassDeclContext) = methodDeclContext.ID().getText
 }

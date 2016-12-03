@@ -16,8 +16,6 @@ class KlassDeclarator extends MiniJavaBaseListener {
   val klassMap = new KlassMap()
 
   override def enterBaseClass(ctx: BaseClassContext): Unit = {
-    val test = ctx.getRuleIndex
-    println(test)
     val name = ctx.ID.getText
     klassMap += Klass(name) match {
       case Failure(e: DuplicateClassErr) => throw new AssertionError(s"Duplicate class $name")
@@ -26,8 +24,6 @@ class KlassDeclarator extends MiniJavaBaseListener {
   }
 
   override def enterChildClass(ctx: ChildClassContext): Unit = {
-    val test = ctx.getRuleIndex
-    println(test)
     val name = ctx.ID(0).getText
     klassMap += Klass(name) match {
       case Failure(e: DuplicateClassErr) => throw new AssertionError(s"Duplicate class $name")
@@ -41,8 +37,6 @@ class KlassDeclarator extends MiniJavaBaseListener {
   }
 
   override def enterCaseClassDecl(ctx: CaseClassDeclContext): Unit = {
-    val test = ctx.getRuleIndex
-    println(test)
     val name = ctx.ID.getText
     klassMap += Klass(name) match {
       case Failure(e: DuplicateClassErr) => throw new AssertionError(s"Duplicate class $name")

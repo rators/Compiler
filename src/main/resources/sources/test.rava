@@ -1,0 +1,46 @@
+class BinaryTree{
+    public static void main(String[] a){
+	System.out.println(new BT().Start());
+    }
+}
+
+class A {
+    public int hola(){
+        int g;
+        g = 1;
+        return g;
+    }
+}
+
+class B extends A {
+}
+
+class C extends B {
+    public boolean hola(){
+        int g;
+        boolean hi;
+        g = 1;
+        hi = true;
+        return hi;
+    }
+}
+
+class Test {
+
+    public int Hello(){
+        B b;
+        A a;
+        int r;
+        boolean x;
+        a = new B();
+        x = !true;
+        r = new A().hola();
+        return r;
+    }
+
+    public int hello(A a, A b){
+        int c;
+        c = 1;
+        return c;
+    }
+}

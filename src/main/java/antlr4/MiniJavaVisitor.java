@@ -220,13 +220,6 @@ public interface MiniJavaVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIdLiteral(MiniJavaParser.IdLiteralContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code methodCall}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMethodCall(MiniJavaParser.MethodCallContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code constructorCall}
 	 * labeled alternative in {@link MiniJavaParser#atom}.
 	 * @param ctx the parse tree

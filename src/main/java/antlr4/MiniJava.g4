@@ -47,11 +47,11 @@ statement
   ;
 
 expr
-  : expr '+' expr
+  : expr PLUS expr
   # plusExpression
-  |   expr '-' expr
+  |   expr MINUS expr
   # subtractExpression
-  |   expr '*' expr
+  |   expr MULT expr
   # multiplyExpression
   |   atom '[' expr ']'
   # arrayAccessExpression
@@ -63,9 +63,9 @@ expr
   # parenExpr
   |   '!' expr
   # notExpr
-  |   expr '<' expr
+  |   expr LESS_THAN expr
   # lessThanExpr
-  |   expr '>' expr
+  |   expr GREAT_THAN expr
   # greaterThanExpr
   |   expr '&&' expr
   # andExpr
@@ -73,13 +73,18 @@ expr
   # atomExpr
   ;
 
+PLUS: '+';
+MINUS: '-';
+MULT: '*';
+LESS_THAN: '<';
+GREAT_THAN: '>';
+AND: '&&';
+
 atom :
   INT_LIT
   # intLiteral
   | ID
   # idLiteral
-  | THIS '.' ID '(' expr ')'
-  # methodCall
   | 'new' ID '(' ')'
   # constructorCall
   | 'this'

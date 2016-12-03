@@ -20,7 +20,7 @@ import scala.util.{Failure, Success, Try}
   */
 object Main extends App {
 //  List("binarysearch", "binarytree", "bubble", "factorial", "input", "linear", "linked").foreach(parseFile)
-  List("binarysearch").foreach(parseFile)
+  List("test").foreach(parseFile)
 
   def parseFile(fileName: String): Unit = {
     //create input stream from input file
@@ -40,7 +40,6 @@ object Main extends App {
         val klassMap = klassDeclWalk(progContext)
         val scope = new ParseTreeProperty[Scope]()
         symbolDeclWalk(klassMap, scope, progContext)
-        println("Binary search symbol table: " + klassMap.get("BinarySearch").get.symbolTable)
         typeCheckWalk(klassMap, scope, progContext)
       case Failure(e) => System.err.println(s"COMPILER ERR -- $e")
     }
@@ -69,7 +68,6 @@ object Main extends App {
   }
 
   def typeCheckWalk(klassMap: KlassMap, scopes: ParseTreeProperty[Scope], parseTree: ProgContext): Unit = {
-    val walker = new ParseTreeWalker()
     val callerTypes = new ParseTreeProperty[Klass]()
     val typeChecker = new TypeChecker(klassMap, scopes, callerTypes, null)
     println("Type checker method call.")
@@ -134,7 +132,4 @@ class MiniJavaErrorListener extends BaseErrorListener {
         }
     }
   }
-
-
-
 }

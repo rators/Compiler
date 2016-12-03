@@ -364,18 +364,6 @@ public interface MiniJavaListener extends ParseTreeListener {
 	 */
 	void exitIdLiteral(MiniJavaParser.IdLiteralContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code methodCall}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void enterMethodCall(MiniJavaParser.MethodCallContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code methodCall}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void exitMethodCall(MiniJavaParser.MethodCallContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code constructorCall}
 	 * labeled alternative in {@link MiniJavaParser#atom}.
 	 * @param ctx the parse tree
