@@ -16,31 +16,36 @@ class B extends A {
 }
 
 class C extends B {
-    public boolean hola(){
+    public int hola(){
+        B b;
         int g;
         boolean hi;
         g = 1;
         hi = true;
-        return hi;
+
+        if(true){
+
+        } else {
+
+        }
+
+        return 1;
     }
 }
 
 class Test {
 
-    public int Hello(){
-        B b;
-        A a;
-        int r;
-        boolean x;
-        a = new B();
-        x = !true;
-        r = new A().hola();
-        return r;
-    }
-
     public int hello(A a, A b){
+        boolean b;
         int c;
         c = 1;
+        b = (this.hi(5));
+
         return c;
+    }
+
+    public boolean hi(int a)
+    {
+        return true;
     }
 }

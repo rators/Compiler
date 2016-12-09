@@ -52,13 +52,13 @@ class TypeChecker(
   }
 
   override def visitMethodDecl(ctx: MethodDeclContext): Klass = {
-    val sigTypeName = ctx.`type`().getText
     currScope = Option(scopes get ctx)
-
+    val sigTypeName = ctx.`type`().getText
+    val returnType = visit(ctx.expr())
     visitChildren(ctx)
 
     klassMap get sigTypeName match {
-      case Some(sigType) => sigType
+      case Some(sigType) => if(returnType <| sigType) sigType else throw InvalidReturnType(sigType, returnType, ctx.getStop)
     }
   }
 
@@ -77,7 +77,6 @@ class TypeChecker(
                 val typeErr = InvalidVarDefinition(leftType.name, rightType.name, ctx.getStop)
 
                 if (rightType <| leftType) {
-
                   rightType
                 } else throw typeErr
             }
@@ -159,7 +158,6 @@ class TypeChecker(
   }
 
   override def visitIdLiteral(ctx: IdLiteralContext): Klass = {
-    visitChildren(ctx)
     val symbolName = ctx.ID().getSymbol.getText
     currScope match {
       case None => throw new AssertionError("Invalid type checker state.")
@@ -167,7 +165,9 @@ class TypeChecker(
         case None => symbolName match {
           case "true" => klassMap get "boolean" get
           case "false" => klassMap get "boolean" get
-          case _ => throw UnresolvedSymbolError(symbolName, ctx.getStart)
+          case _ =>
+            println(scope)
+            throw UnresolvedSymbolError(symbolName, ctx.getStart)
         }
         case Some(symbol) => symbol.kType
       }
@@ -225,6 +225,29 @@ class TypeChecker(
     }
   }
 
+  override def visitIfStatement(ctx: IfStatementContext): Klass = {
+    val predType = visit(ctx.expr())
+
+    if(predType.name != "boolean")
+      throw InvalidType(predType, klassMap get "boolean" get, ctx.expr().getStart)
+
+    visitChildren(ctx)
+
+    null
+  }
+
+  override def visitWhileLoopHead(ctx: WhileLoopHeadContext): Klass = {
+    val predType = visit(ctx.expr())
+
+    if(predType.name != "boolean")
+      throw InvalidType(predType, klassMap get "boolean" get, ctx.expr().getStart)
+
+    visitChildren(ctx)
+
+    null
+  }
+
+
   /**
     * Gets the enclosing klass for a scope.
     *
@@ -244,11 +267,12 @@ class TypeChecker(
 
   private def enterScope(ctx: ParserRuleContext) = {
     currScope = Option(scopes get ctx)
-    currScope = currScope match {
+    println("Scope change!")
+    println(currScope)
+    currScope match {
       case None => throw new AssertionError("Invalid type checker state.")
       case Some(scope) =>
         visitChildren(ctx) //run type check visitor on children
-        scope.parentScope
     }
     null
   }

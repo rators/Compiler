@@ -63,6 +63,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
             case None => SymbolDeclarator.throwInvalidStateErr
             case Some(symbolType) =>
               val varSymbol = VarSymbol(symbolName, symbolType)
+              println(s"Defining symbol: $symbolName in $currScope")
               currScope.define(varSymbol)
           }
           case Some(_) =>

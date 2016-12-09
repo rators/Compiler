@@ -9,6 +9,7 @@ case class BinaryOperatorError(leftType: Klass, rightType: Klass, offender: Toke
   extends AssertionError(Error.binaryOperatorMessage(leftType, rightType, offender, operator))
 
 case class InvalidReturnType(expectedType: Klass, actualType: Klass, offender: Token)
+extends AssertionError(Error.invalidReturnType(expectedType, actualType, offender))
 
 case class InvalidVarDefinition(expected: String, actual: String, offender: Token)
   extends AssertionError(Error.invalidVarDefinition(actual, expected, offender))
@@ -38,6 +39,10 @@ case class InvalidType(actual: Klass, expected: Klass, offender: Token)
   *
   */
 object Error {
+  def invalidReturnType(expectedType: Klass, actualType: Klass, offender: Token): String = {
+    s"${errorPosit(offender)} Invalid return type: method return type [${actualType.name}] not <| with signature type [${expectedType.name}]"
+  }
+
   type Operator = String
 
   def invalidType(actual: Klass, expected: Klass, offender: Token): String = {
