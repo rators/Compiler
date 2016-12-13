@@ -4,6 +4,7 @@ import compiler.typecheck.error.InvalidMethodOverload
 import compiler.typecheck.scope.Scope.SymbolMap
 import compiler.typecheck.symbol.Symbol
 import org.antlr.v4.runtime.Token
+import org.objectweb.asm._
 
 import scala.util.{Failure, Success, Try}
 
@@ -11,6 +12,7 @@ import scala.util.{Failure, Success, Try}
   * The object representing all classes during semantic analysis and synthesis.
   */
 case class Klass(override val name: String, var _superKlass: Option[Klass] = None) extends Scope {
+
   val symbolTable = new SymbolMap()
 
   override def parentScope: Option[Klass] = _superKlass
@@ -145,6 +147,16 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
     d match {
       case None => Nil
       case Some(k: Klass) => k.localMethods ::: getMethods(k.parentScope)
+    }
+  }
+
+  def asAsmType: Type = {
+    /** Returns an asm.Type representation for this klass. */
+    name match {
+      case "int" => Type.INT_TYPE
+      case "boolean" => Type.BOOLEAN_TYPE
+      case "int[]" => Type.getType(classOf[Array[Int]])
+      case _ =>     Type.getType("L" + name + ";");
     }
   }
 

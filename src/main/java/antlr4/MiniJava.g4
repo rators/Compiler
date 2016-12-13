@@ -40,11 +40,15 @@ statement
         # varDefinition
   |   ID '[' expr ']' '=' expr ';'
         # arrayDefinition
-  |   'while' '(' expr ')' statement
+  |   'while' '(' expr ')' whileBlock
         # whileLoopHead
-  |   'if' '(' expr ')' statement 'else' statement
+  |   'if' '(' expr ')' ifBlock 'else' elseBlock
         # ifStatement
   ;
+
+whileBlock: statement;
+ifBlock: statement;
+elseBlock: statement;
 
 expr
   : expr PLUS expr

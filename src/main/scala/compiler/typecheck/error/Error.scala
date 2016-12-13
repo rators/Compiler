@@ -9,7 +9,7 @@ case class BinaryOperatorError(leftType: Klass, rightType: Klass, offender: Toke
   extends AssertionError(Error.binaryOperatorMessage(leftType, rightType, offender, operator))
 
 case class InvalidReturnType(expectedType: Klass, actualType: Klass, offender: Token)
-extends AssertionError(Error.invalidReturnType(expectedType, actualType, offender))
+  extends AssertionError(Error.invalidReturnType(expectedType, actualType, offender))
 
 case class InvalidVarDefinition(expected: String, actual: String, offender: Token)
   extends AssertionError(Error.invalidVarDefinition(actual, expected, offender))
@@ -35,10 +35,17 @@ case class UnaryOperatorError(actual: Klass, offender: Token)
 case class InvalidType(actual: Klass, expected: Klass, offender: Token)
   extends AssertionError(Error.invalidType(actual, expected, offender))
 
+case class CyclicInheritanceError(klass: Klass, offender: Token)
+  extends AssertionError(Error.cyclicInheritance(klass, offender))
+
 /**
-  *
+  * The error class.
   */
 object Error {
+  def cyclicInheritance(klass: Klass, offender: Token): String = {
+    s"${errorPosit(offender)} Class [${klass.name}] has a cyclic dependency in its class hierarchy."
+  }
+
   def invalidReturnType(expectedType: Klass, actualType: Klass, offender: Token): String = {
     s"${errorPosit(offender)} Invalid return type: method return type [${actualType.name}] not <| with signature type [${expectedType.name}]"
   }

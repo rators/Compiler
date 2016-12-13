@@ -122,6 +122,24 @@ public interface MiniJavaVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIfStatement(MiniJavaParser.IfStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MiniJavaParser#whileBlock}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitWhileBlock(MiniJavaParser.WhileBlockContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MiniJavaParser#ifBlock}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIfBlock(MiniJavaParser.IfBlockContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MiniJavaParser#elseBlock}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElseBlock(MiniJavaParser.ElseBlockContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code greaterThanExpr}
 	 * labeled alternative in {@link MiniJavaParser#expr}.
 	 * @param ctx the parse tree

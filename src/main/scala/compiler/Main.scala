@@ -37,6 +37,7 @@ object Main extends App {
     Try(parser.prog()) match {
       case Success(progContext) =>
         walkThrough(progContext)
+
         val klassMap = klassDeclWalk(progContext)
         val scope = new ParseTreeProperty[Scope]()
         symbolDeclWalk(klassMap, scope, progContext)
@@ -63,6 +64,7 @@ object Main extends App {
     val walker = new ParseTreeWalker()
 
     val klassDeclarator = new SymbolDeclarator(klassMap, scopes, null)
+
     val tryKlassDeclWalk = Try {
       walker.walk(klassDeclarator, parseTree)
     }
@@ -70,6 +72,7 @@ object Main extends App {
     tryKlassDeclWalk match {
       case Failure(e) =>
         System.err.println(e.toString)
+        System.exit(1)
       case Success(_) => println("Klasses declared successfully!")
     }
   }
@@ -145,4 +148,7 @@ class MiniJavaErrorListener extends BaseErrorListener {
         }
     }
   }
+
+
+
 }

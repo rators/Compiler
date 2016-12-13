@@ -12,7 +12,7 @@ class A {
     }
 }
 
-class B extends A {
+class B extends B {
 }
 
 class C extends B {
@@ -36,16 +36,16 @@ class C extends B {
 class Test {
 
     public int hello(A a, A b){
-        boolean b;
         int c;
         c = 1;
-        b = (this.hi(5));
-
-        return c;
+        return 1;
     }
 
-    public boolean hi(int a)
-    {
+    public boolean hi(int a){
+        int d;
+        B b;
+        d = this.hello(new B(), new A());
+        b = new C();
         return true;
     }
 }

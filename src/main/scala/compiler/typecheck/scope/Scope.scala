@@ -78,6 +78,7 @@ trait Scope {
 object Scope {
   type LinkedSymbolMap = mutable.LinkedHashMap[String, Symbol]
   type SymbolMap = mutable.HashMap[String, Symbol]
+
   implicit class SymbolMapImpl(val symbolMap: SymbolMap){
     def +=(entry: (String, Symbol)): Unit = symbolMap.put(entry._1, entry._2)
   }

@@ -4,9 +4,10 @@ import javax.swing.JTextField
 
 import antlr4.MiniJavaParser._
 import antlr4.{MiniJavaBaseListener, MiniJavaParser}
+import compiler.typecheck.error.CyclicInheritanceError
 import compiler.typecheck.scope.Scope.LinkedSymbolMap
 import compiler.typecheck.scope.{Block, Klass, Method, Scope}
-import compiler.typecheck.symbol.{PropertySymbol, VarSymbol}
+import compiler.typecheck.symbol.{ParamSymbol, PropertySymbol, VarSymbol}
 import compiler.typecheck.utils.KlassMap
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTreeProperty
@@ -46,9 +47,8 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
     parentKlass match {
       case None => SymbolDeclarator.throwInvalidStateErr
       case Some(superKlass) =>
-        SymbolDeclarator.hasCycleParadox(ctx, childClass, childClass.parentScope)
-
         childClass.superKlass = parentKlass
+        SymbolDeclarator.hasCycleParadox(ctx, childClass, childClass.parentScope)
     }
   }
 
@@ -63,11 +63,9 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
             case None => SymbolDeclarator.throwInvalidStateErr
             case Some(symbolType) =>
               val varSymbol = VarSymbol(symbolName, symbolType)
-              println(s"Defining symbol: $symbolName in $currScope")
               currScope.define(varSymbol)
           }
           case Some(_) =>
-            println("Multiple declarations for: " + symbolName)
             SymbolDeclarator.throwInvalidStateErr
         }
     }
@@ -236,7 +234,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
     val symbolName = ctx.ID().getText
 
     klassOpt match {
-      case Some(typeKlass) => (symbolName, PropertySymbol(symbolName, typeKlass))
+      case Some(typeKlass) => (symbolName, ParamSymbol(symbolName, typeKlass))
       case None => SymbolDeclarator.throwInvalidStateErr
     }
   }
@@ -349,8 +347,8 @@ object SymbolDeclarator {
       case None => Success(Unit)
       case Some(parent) =>
         parent == baseKlass match {
-          case true => throwInvalidStateErr
-          case false => hasCycleParadox(ctx, baseKlass, parent.superKlass)
+          case true => Failure(throw CyclicInheritanceError(baseKlass, ctx.ID(0).getSymbol))
+          case false => Success(Unit)
         }
     }
   }

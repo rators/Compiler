@@ -5,7 +5,12 @@ import compiler.typecheck.scope.Scope.{LinkedSymbolMap, SymbolMap}
 import compiler.typecheck.symbol.{PropertySymbol, SubSymbol, Symbol}
 
 
-case class Signature(returnType: Klass, name: String, params: Method.Params)
+case class Signature(returnType: Klass, name: String, params: Method.Params) {
+  val toAsmMethod: Method.ASMMethod = {
+    val sigString = s"${returnType.name} $name ${params.map(_.name).mkString("(", ",", ")")}"
+    org.objectweb.asm.commons.Method.getMethod(sigString)
+  }
+}
 
 /**
   * The class associated with methods of type scope.
@@ -99,10 +104,13 @@ class Method(override val name: String, override val kType: Klass, val ownerKlas
   override def toString = s"Method($locals, $initializedVariables, $name, $kType, $parentScope, $paramDefs)"
 
   def signature = Signature(this.kType, name, paramDefs.map(_._2.asInstanceOf[PropertySymbol]).map(_.kType).toList)
+
+  def asAsmMethod: org.objectweb.asm.commons.Method = {}
 }
 
 object Method {
   type Params = List[Klass]
+  type ASMMethod = org.objectweb.asm.commons.Method
 
   def getSignatureSimple(methodDeclContext: MethodDeclContext) = methodDeclContext.ID().getText
   def getSignatureSimple(methodDeclContext: CaseClassDeclContext) = methodDeclContext.ID().getText

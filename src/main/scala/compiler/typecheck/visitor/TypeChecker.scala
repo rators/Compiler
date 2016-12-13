@@ -58,7 +58,9 @@ class TypeChecker(
     visitChildren(ctx)
 
     klassMap get sigTypeName match {
-      case Some(sigType) => if(returnType <| sigType) sigType else throw InvalidReturnType(sigType, returnType, ctx.getStop)
+      case Some(sigType) =>
+        if(returnType <| sigType) sigType
+        else throw InvalidReturnType(sigType, returnType, ctx.getStop)
     }
   }
 
@@ -165,9 +167,7 @@ class TypeChecker(
         case None => symbolName match {
           case "true" => klassMap get "boolean" get
           case "false" => klassMap get "boolean" get
-          case _ =>
-            println(scope)
-            throw UnresolvedSymbolError(symbolName, ctx.getStart)
+          case _ => throw UnresolvedSymbolError(symbolName, ctx.getStart)
         }
         case Some(symbol) => symbol.kType
       }
@@ -215,7 +215,6 @@ class TypeChecker(
       .map(visit).toList
 
     val expectedTypes: List[Klass] = method.argsDefList.toList
-
     val check: List[Boolean] = actualTypes.zip(expectedTypes)
       .map((pair) => pair._1 <| pair._2)
 
@@ -267,8 +266,6 @@ class TypeChecker(
 
   private def enterScope(ctx: ParserRuleContext) = {
     currScope = Option(scopes get ctx)
-    println("Scope change!")
-    println(currScope)
     currScope match {
       case None => throw new AssertionError("Invalid type checker state.")
       case Some(scope) =>
@@ -279,6 +276,23 @@ class TypeChecker(
 }
 
 object TypeChecker {
+  /**
+    * Gets the enclosing klass for a scope.
+    *
+    * @param scope
+    * A scope.
+    * @return
+    * The enclosing class for this scope.
+    */
+  @tailrec def getEnclosingKlass(scope: Option[Scope]): Klass = {
+    scope match {
+      case Some(method: Method) => getEnclosingKlass(method.parentScope)
+      case Some(block: Block) => getEnclosingKlass(block.parentScope)
+      case Some(klass: Klass) => klass
+      case _ => throw new AssertionError("Invalid type checker state.")
+    }
+  }
+
   def binaryOperatorCheck(leftType: Klass, rightType: Klass, offender: Token, operand: String)(implicit klassMap: KlassMap): Klass = {
     (leftType, rightType) match {
       case (Klass("int", _), Klass("int", _)) => klassMap get "int" get
