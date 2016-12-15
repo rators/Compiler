@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
   * Main class for Phase 1.
   */
 object Main extends App {
-      List("binarysearch").foreach(parseFile)
+      List("bubble").foreach(parseFile)
 //  List("test").foreach(parseFile)
 
   def parseFile(fileName: String): Unit = {

@@ -17,5 +17,5 @@ antlr4PackageName in Antlr4 := Some("project.anltr4")
 libraryDependencies ++= Seq(
   "org.scalactic" %% "scalactic" % "3.0.0",
   "org.scalatest" %% "scalatest" % "3.0.0" % "test",
-  "org.ow2.asm" % "asm-commons" % "5.1"
+  "org.ow2.asm" % "asm-commons" % "5.0.3"
 )

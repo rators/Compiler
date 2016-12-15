@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
 import scala.collection.mutable.{Stack => LabelStack}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   * The code generator class.
@@ -52,6 +52,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     methodGenerator = new GeneratorAdapter(ACC_PUBLIC, CodeGenerator.INIT, null, null, classWriter)
     methodGenerator.loadThis()
     methodGenerator.invokeConstructor(Type.getType(classOf[Object]), CodeGenerator.INIT)
+
     methodGenerator.returnValue()
     methodGenerator.endMethod()
 
@@ -61,7 +62,9 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   override def exitMainClass(ctx: MainClassContext): Unit = {
     methodGenerator.returnValue()
     methodGenerator.endMethod()
+
     classWriter.visitEnd()
+
     val mainKlass = klasses.get(ctx.ID(0).getText).get
     val klassName = mainKlass.name
     val klassFile = new File(s"src/main/resources/sources/gen/$klassName.class")
@@ -170,21 +173,6 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     methodGenerator.loadThis()
   }
 
-  override def enterVarDefinition(ctx: VarDefinitionContext): Unit = {
-    val symbolName = ctx.ID().getText
-
-    currentScope match {
-      case None => throw new AssertionError("Scope not defined at variable definition enter")
-      case Some(currScope: Scope) =>
-        currScope deepFind symbolName match {
-          case None => throw new AssertionError(s"$symbolName not defined in scope ${currScope.name}")
-          case Some(property: PropertySymbol) => methodGenerator.loadThis()
-          case _ => System.err.println(s"Symbol $symbolName is not a property, skipping case...")
-        }
-    }
-
-    methodGenerator.loadThis()
-  }
 
   override def exitVarDefinition(ctx: VarDefinitionContext): Unit = {
     currentScope match {
@@ -193,6 +181,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
         currScope.deepFind(ctx.ID().getText) match {
           case Some(property: PropertySymbol) =>
             val enclosingKlass = TypeChecker.getEnclosingKlass(Some(currScope))
+            methodGenerator.loadThis()
             methodGenerator.putField(enclosingKlass.asAsmType, property.name, property.kType.asAsmType)
           case Some(paramSymbol: ParamSymbol) => methodGenerator.storeArg(paramSymbol.id)
           case Some(localSymbol: VarSymbol) => methodGenerator.storeLocal(localSymbol.id, localSymbol.kType.asAsmType)
@@ -359,16 +348,14 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     methodGenerator.not()
   }
 
-
   override def enterMethodDecl(ctx: MethodDeclContext): Unit = enterScope(ctx) {
     currentScope match {
       case None => throw new AssertionError(s"Method not defined for ${ctx.ID().getText}")
       case Some(m: Method) =>
         currentMethod = m.signature.toAsmMethod
-        println("Current method!")
+
         methodGenerator = new GeneratorAdapter(ACC_PUBLIC, currentMethod, null, null, classWriter)
 
-        println(ctx.methodParam().size())
         val paramsCtx: IndexedSeq[MethodParamContext] = ctx.methodParam().asScala.toIndexedSeq
         paramsCtx.indices.foreach((id) => placeParam(id, paramsCtx(id))(m, ctx))
     }
@@ -383,15 +370,19 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   }
 
   override def exitMethodDecl(ctx: MethodDeclContext): Unit = exitScope {
-//    val klassName = "inter"
-//    val klassFile = new File(s"$klassName.class")
-//    val fileOutputStream = new FileOutputStream(klassFile)
-//    fileOutputStream.write(classWriter.toByteArray)
-//    fileOutputStream.close()
-//    System.exit(1)
     Try {
       methodGenerator.returnValue()
       methodGenerator.endMethod()
+    } match {
+      case Failure(x) =>
+        val klassName = "fail!"
+        val klassFile = new File(s"$klassName.class")
+        val fileOutputStream = new FileOutputStream(klassFile)
+        fileOutputStream.write(classWriter.toByteArray)
+        fileOutputStream.close()
+        throw x
+      case Success(_) =>
+        "whata!"
     }
   }
 

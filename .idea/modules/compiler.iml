@@ -35,8 +35,8 @@
     <orderEntry type="library" scope="TEST" name="SBT: org.scala-lang.modules:scala-xml_2.12:1.0.5:jar" level="project" />
     <orderEntry type="library" name="SBT: org.scalactic:scalactic_2.12:3.0.0:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="SBT: org.scalatest:scalatest_2.12:3.0.0:jar" level="project" />
-    <orderEntry type="library" name="SBT: org.ow2.asm:asm:5.1:jar" level="project" />
-    <orderEntry type="library" name="SBT: org.ow2.asm:asm-commons:5.1:jar" level="project" />
-    <orderEntry type="library" name="SBT: org.ow2.asm:asm-tree:5.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.ow2.asm:asm:5.0.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.ow2.asm:asm-commons:5.0.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.ow2.asm:asm-tree:5.0.3:jar" level="project" />
   </component>
 </module>
