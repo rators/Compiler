@@ -9,8 +9,8 @@ case class DuplicateClassErr(klass: Klass) extends Throwable
 /**
   * A collection of klasses with safe guard accessors.
   */
-class KlassMap extends {
-  val klassMap = scala.collection.mutable.HashMap[String, Klass]()
+class KlassMap {
+  private val klassMap = scala.collection.mutable.HashMap[String, Klass]()
 
   List(
     "int[]",
@@ -28,6 +28,10 @@ class KlassMap extends {
   }
 
   def get(name: String) = klassMap get name
+
+  private def values: Iterable[Klass] = klassMap.values
+
+  private def keys: Set[String] = klassMap.keySet.toSet
 
   override def toString = klassMap.toString
 }

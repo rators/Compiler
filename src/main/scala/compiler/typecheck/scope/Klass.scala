@@ -43,7 +43,10 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
     * The symbol to be initialized.
     */
   override def initialize(symbol: Symbol): Unit = {
-    throw new AssertionError("Class symbols cannot be re-initialized after definition.")
+    symbol.kType match {
+      case Klass("boolean", _) => Unit
+      case _ => throw new AssertionError("Class symbols cannot be re-initialized after definition.")
+    }
   }
 
   /**
@@ -135,8 +138,9 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
 
   /**
     * The methods contained in this class.
+    *
     * @return
-    *         The methods.
+    * The methods.
     */
   def localMethods: List[Method] = symbolTable.values.filter((v) => v match {
     case m: Method => true
@@ -156,7 +160,7 @@ case class Klass(override val name: String, var _superKlass: Option[Klass] = Non
       case "int" => Type.INT_TYPE
       case "boolean" => Type.BOOLEAN_TYPE
       case "int[]" => Type.getType(classOf[Array[Int]])
-      case _ =>     Type.getType("L" + name + ";");
+      case _ => Type.getType(s"L$name;")
     }
   }
 

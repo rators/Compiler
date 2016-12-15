@@ -108,7 +108,7 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
                 val method = new Method(methodName, klassType, methodParent, new LinkedSymbolMap())
                 setMethodParameters(method, ctx)
                 methodParent define method
-                setScope(method)(ctx)
+                  setScope(method)(ctx)
               case Some(alreadyDecl) => SymbolDeclarator.throwInvalidStateErr //invalid method override exception
             }
         }

@@ -5,7 +5,7 @@ import java.io.{File, FileInputStream}
 import antlr4.MiniJavaParser.ProgContext
 import antlr4.{MiniJavaBaseListener, MiniJavaLexer, MiniJavaParser}
 import compiler.CompilerImpl._
-import compiler.typecheck.listener.{KlassDeclarator, SymbolDeclarator}
+import compiler.typecheck.listener.{CodeGenerator, KlassDeclarator, SymbolDeclarator}
 import compiler.typecheck.scope.{Klass, Scope}
 import compiler.typecheck.utils.KlassMap
 import compiler.typecheck.visitor.TypeChecker
@@ -14,13 +14,13 @@ import org.antlr.v4.runtime.tree.{ParseTreeProperty, ParseTreeWalker}
 
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success, Try}
+
 /**
-  *💩
   * Main class for Phase 1.
   */
 object Main extends App {
-//    List("binarysearch", "binarytree", "bubble", "factorial", "input", "linear", "linked").foreach(parseFile)
-  List("test").foreach(parseFile)
+      List("binarysearch").foreach(parseFile)
+//  List("test").foreach(parseFile)
 
   def parseFile(fileName: String): Unit = {
     //create input stream from input file
@@ -40,8 +40,10 @@ object Main extends App {
 
         val klassMap = klassDeclWalk(progContext)
         val scope = new ParseTreeProperty[Scope]()
+        val callerTypes = new ParseTreeProperty[Klass]()
         symbolDeclWalk(klassMap, scope, progContext)
-        typeCheckWalk(klassMap, scope, progContext)
+        typeCheckWalk(klassMap, scope, progContext, callerTypes)
+        codeGenWalk(klassMap, scope, progContext, callerTypes)
       case Failure(e) => System.err.println(s"COMPILER ERR -- $e")
     }
   }
@@ -77,9 +79,9 @@ object Main extends App {
     }
   }
 
-  def typeCheckWalk(klassMap: KlassMap, scopes: ParseTreeProperty[Scope], parseTree: ProgContext): Unit = {
-    val callerTypes = new ParseTreeProperty[Klass]()
+  def typeCheckWalk(klassMap: KlassMap, scopes: ParseTreeProperty[Scope], parseTree: ProgContext, callerTypes: ParseTreeProperty[Klass]): Unit = {
     val typeChecker = new TypeChecker(klassMap, scopes, callerTypes, null)
+
     val tryTypeCheck = Try {
       typeChecker.visit(parseTree)
     }
@@ -89,6 +91,12 @@ object Main extends App {
         System.err.println(e.toString)
       case Success(_) => println("Type check successful!")
     }
+  }
+
+  def codeGenWalk(klassMap: KlassMap, scopes: ParseTreeProperty[Scope], parseTree: ProgContext, callerTypes: ParseTreeProperty[Klass]): Unit = {
+    val codeGen = new CodeGenerator(klassMap, scopes, callerTypes)
+
+    ParseTreeWalker.DEFAULT.walk(codeGen, parseTree)
   }
 
   def fileToStream(resourcePath: String): CharStream = {
@@ -148,7 +156,6 @@ class MiniJavaErrorListener extends BaseErrorListener {
         }
     }
   }
-
 
 
 }

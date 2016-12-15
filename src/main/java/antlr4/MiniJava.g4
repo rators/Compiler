@@ -85,7 +85,9 @@ GREAT_THAN: '>';
 AND: '&&';
 
 atom :
-  INT_LIT
+    BOOLEAN_LIT
+  # booleanLit
+  | INT_LIT
   # intLiteral
   | ID
   # idLiteral
@@ -95,8 +97,6 @@ atom :
   # thisCall
   | 'new' 'int' '[' expr ']'
   # integerArr
-  | BOOLEAN_LIT
-  # booleanLit
   ;
 
 ID        :   [a-zA-Z_][a-zA-Z0-9_]*;

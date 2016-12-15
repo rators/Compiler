@@ -1,6 +1,8 @@
 package compiler.typecheck.listener
 
 import java.io.{File, FileOutputStream, PrintStream}
+import java.nio.charset.{Charset, StandardCharsets}
+import java.util.Scanner
 
 import antlr4.MiniJavaBaseListener
 import antlr4.MiniJavaParser._
@@ -18,6 +20,8 @@ import compiler.typecheck.visitor.TypeChecker
 import scala.collection.JavaConverters._
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
+import scala.collection.mutable.{Stack => LabelStack}
+import scala.util.Try
 
 /**
   * The code generator class.
@@ -34,7 +38,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   var classWriter: ClassWriter = _
   var currentMethod: Method.ASMMethod = _
   var methodGenerator: GeneratorAdapter = _
-  var labelStack: mutable.Stack[Label] = mutable.Stack()
+  var labelStack: LabelStack[Label] = mutable.Stack()
   //boolean isArg
   var argCount: Int = 0
 
@@ -60,14 +64,13 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     classWriter.visitEnd()
     val mainKlass = klasses.get(ctx.ID(0).getText).get
     val klassName = mainKlass.name
-    val klassFile = new File(s"$klassName.class")
+    val klassFile = new File(s"src/main/resources/sources/gen/$klassName.class")
     val fileOutputStream = new FileOutputStream(klassFile)
     fileOutputStream.write(classWriter.toByteArray)
     fileOutputStream.close()
   }
 
   override def enterBaseClass(ctx: BaseClassContext): Unit = enterScope(ctx) {
-
     val klass = klasses.get(ctx.ID.getText).get
     val klassName = klass.name
 
@@ -76,7 +79,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
 
     methodGenerator = new GeneratorAdapter(ACC_PUBLIC, CodeGenerator.INIT, null, null, classWriter)
     methodGenerator.loadThis()
-    methodGenerator.invokeConstructor(Type.getObjectType(klassName), CodeGenerator.INIT)
+    methodGenerator.invokeConstructor(Type.getType(classOf[Object]), CodeGenerator.INIT)
     methodGenerator.returnValue()
     methodGenerator.endMethod()
   }
@@ -101,9 +104,9 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     methodGenerator.endMethod()
   }
 
-  override def exitChildClass(ctx: ChildClassContext): Unit = exitScope(exitClass(ctx))
+  override def exitChildClass(ctx: ChildClassContext): Unit = exitClass(ctx)
 
-  override def exitBaseClass(ctx: BaseClassContext): Unit = exitScope(exitClass(ctx))
+  override def exitBaseClass(ctx: BaseClassContext): Unit = exitClass(ctx)
 
   def exitClass(ctx: ParserRuleContext): Unit = exitScope {
     val classID = ctx match {
@@ -114,7 +117,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     classWriter.visitEnd()
     val klass = klasses.get(classID).get
     val klassName = klass.name
-    val klassFile = new File(s"$klassName.class")
+    val klassFile = new File(s"src/main/resources/sources/gen/$klassName.class")
     val fileOutputStream = new FileOutputStream(klassFile)
     fileOutputStream.write(classWriter.toByteArray)
     fileOutputStream.close()
@@ -144,40 +147,42 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     currScope.deepFind(ctx.ID().getText) match {
       case None => throw new AssertionError(s"Symbol not defined for ${ctx.ID().getText}")
       case Some(symbol: VarSymbol) =>
-        val kType = symbol.kType.asAsmType
-        val localID = methodGenerator.newLocal(kType)
-        symbol.localID = localID
+        if (!symbol.hasId) {
+          val kType = symbol.kType.asAsmType
+          val localID = methodGenerator.newLocal(kType)
+          symbol.id = localID
+        } else {
+          throw new RuntimeException("Var declared twice!")
+        }
     }
   }
 
-  override def enterMethodDecl(ctx: MethodDeclContext): Unit = enterScope(ctx) {
-    currentScope match {
-      case None => throw new AssertionError(s"Method not defined for ${ctx.ID().getText}")
-      case Some(m: Method) =>
-        currentMethod = m.signature.toAsmMethod
-        methodGenerator = new GeneratorAdapter(ACC_PUBLIC, currentMethod, null, null, classWriter)
-
-        val paramsCtx: IndexedSeq[MethodParamContext] = ctx.methodParam().asScala.toIndexedSeq
-        paramsCtx.indices.foreach((id) => placeParam(id, paramsCtx(id))(m, ctx))
-    }
-  }
-
-  private def placeParam(id: Int, mCTX: MethodParamContext)(m: Method, ctx: MethodDeclContext): Unit = {
-    m.deepFind(mCTX.ID().getText) match {
-      case None => throw new AssertionError(s"Method not defined for ${ctx.ID().getText}")
-      case Some(symbol: PropertySymbol) => symbol.paramID = id
-    }
-  }
 
   override def enterPrintToConsole(ctx: PrintToConsoleContext): Unit = {
     methodGenerator.getStatic(Type.getType(classOf[System]), "out", Type.getType(classOf[PrintStream]))
   }
 
   override def exitPrintToConsole(ctx: PrintToConsoleContext): Unit = {
-    methodGenerator.invokeVirtual(Type.getType(classOf[System]), org.objectweb.asm.commons.Method.getMethod("void println (int)"))
+    methodGenerator.invokeVirtual(Type.getType(classOf[PrintStream]), org.objectweb.asm.commons.Method.getMethod("void println (int)"))
   }
 
   override def enterPropertyDecl(ctx: PropertyDeclContext): Unit = {
+    methodGenerator.loadThis()
+  }
+
+  override def enterVarDefinition(ctx: VarDefinitionContext): Unit = {
+    val symbolName = ctx.ID().getText
+
+    currentScope match {
+      case None => throw new AssertionError("Scope not defined at variable definition enter")
+      case Some(currScope: Scope) =>
+        currScope deepFind symbolName match {
+          case None => throw new AssertionError(s"$symbolName not defined in scope ${currScope.name}")
+          case Some(property: PropertySymbol) => methodGenerator.loadThis()
+          case _ => System.err.println(s"Symbol $symbolName is not a property, skipping case...")
+        }
+    }
+
     methodGenerator.loadThis()
   }
 
@@ -189,8 +194,8 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
           case Some(property: PropertySymbol) =>
             val enclosingKlass = TypeChecker.getEnclosingKlass(Some(currScope))
             methodGenerator.putField(enclosingKlass.asAsmType, property.name, property.kType.asAsmType)
-          case Some(localSymbol: VarSymbol) => methodGenerator.storeLocal(localSymbol.localID, localSymbol.kType.asAsmType)
-          case Some(paramSymbol: ParamSymbol) => methodGenerator.storeArg(paramSymbol.paramID)
+          case Some(paramSymbol: ParamSymbol) => methodGenerator.storeArg(paramSymbol.id)
+          case Some(localSymbol: VarSymbol) => methodGenerator.storeLocal(localSymbol.id, localSymbol.kType.asAsmType)
         }
     }
   }
@@ -204,8 +209,8 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
             val enclosingKlass = TypeChecker.getEnclosingKlass(Some(currScope))
             methodGenerator.loadThis()
             methodGenerator.getField(enclosingKlass.asAsmType, property.name, property.kType.asAsmType)
-          case Some(localSymbol: VarSymbol) => methodGenerator.loadLocal(localSymbol.localID, localSymbol.kType.asAsmType)
-          case Some(paramSymbol: ParamSymbol) => methodGenerator.loadArg(paramSymbol.paramID)
+          case Some(localSymbol: VarSymbol) => methodGenerator.loadLocal(localSymbol.id, localSymbol.kType.asAsmType)
+          case Some(paramSymbol: ParamSymbol) => methodGenerator.loadArg(paramSymbol.id)
         }
     }
   }
@@ -257,6 +262,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     methodGenerator.mark(labelStack.pop)
   }
 
+
   override def exitAndExpr(ctx: AndExprContext): Unit = {
     methodGenerator.math(GeneratorAdapter.AND, Type.BOOLEAN_TYPE)
   }
@@ -294,11 +300,11 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   }
 
   override def exitMethodCallExpression(ctx: MethodCallExpressionContext): Unit = {
-    val klass = callerTypes.get(ctx)
+    val klass = callerTypes get ctx
 
     klass.deepFind(ctx.ID().getText) match {
       case None => throw new AssertionError(s"Symbol not defined ${ctx.ID().getText} in class [${klass.name}]")
-      case Some(m: Method) => methodGenerator.invokeVirtual(klass.asAsmType, m.asAsmMethod)
+      case Some(m: Method) => methodGenerator.invokeVirtual(klass.asAsmType, m.signature.toAsmMethod)
     }
   }
 
@@ -307,17 +313,86 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   }
 
   override def enterBooleanLit(ctx: BooleanLitContext): Unit = {
-    val predicate = Boolean.parseBoolean(ctx.BooleanLiteral().getText())
-    methodGenerator.push(predicate);
+    val predicate = ctx.BOOLEAN_LIT().getText.toBoolean
+    methodGenerator.push(predicate)
   }
 
-  override def enterIdLiteral(ctx: IdLiteralContext): Unit = {
+  override def exitIdLiteral(ctx: IdLiteralContext): Unit = {
+    currentScope match {
+      case None => throw new AssertionError(s"Scope not defined in enter id literal ${ctx.getText}")
+      case Some(currScope) =>
+        currScope deepFind ctx.getText match {
+          case None => throw new AssertionError(s"(${ctx.getStart.getLine}, ${ctx.getStart.getCharPositionInLine})Scope ${currScope.name} missing symbol: ${ctx.getText}")
+          case Some(paramSymbol: ParamSymbol) =>
+            methodGenerator.loadArg(paramSymbol.id)
+          case Some(propertySymbol: PropertySymbol) =>
+            val enclosingKlass = TypeChecker.getEnclosingKlass(Some(currScope)).asAsmType
+            val symbolType = propertySymbol.kType.asAsmType
+            methodGenerator.loadThis()
+            methodGenerator.getField(enclosingKlass, propertySymbol.name, symbolType)
+          case Some(varSymbol: VarSymbol) =>
+            varSymbol.name match {
+              case "true" =>
+                val predicate = ctx.ID().getText.toBoolean
+                methodGenerator.push(predicate)
+              case "false" =>
+                val predicate = ctx.ID().getText.toBoolean
+                methodGenerator.push(predicate)
+              case _ => methodGenerator.loadLocal(varSymbol.id)
+            }
+        }
+    }
+  }
 
+  override def exitThisCall(ctx: ThisCallContext): Unit = methodGenerator.loadThis()
+
+  override def exitIntegerArr(ctx: IntegerArrContext): Unit = methodGenerator.newArray(Type.INT_TYPE)
+
+  override def enterConstructorCall(ctx: ConstructorCallContext): Unit = {
+    val objectType = Type.getObjectType(ctx.ID().getText)
+    methodGenerator.newInstance(objectType)
+    methodGenerator.dup()
+    methodGenerator.invokeConstructor(objectType, CodeGenerator.INIT)
+  }
+
+  override def exitNotExpr(ctx: NotExprContext): Unit = {
+    methodGenerator.not()
+  }
+
+
+  override def enterMethodDecl(ctx: MethodDeclContext): Unit = enterScope(ctx) {
+    currentScope match {
+      case None => throw new AssertionError(s"Method not defined for ${ctx.ID().getText}")
+      case Some(m: Method) =>
+        currentMethod = m.signature.toAsmMethod
+        println("Current method!")
+        methodGenerator = new GeneratorAdapter(ACC_PUBLIC, currentMethod, null, null, classWriter)
+
+        println(ctx.methodParam().size())
+        val paramsCtx: IndexedSeq[MethodParamContext] = ctx.methodParam().asScala.toIndexedSeq
+        paramsCtx.indices.foreach((id) => placeParam(id, paramsCtx(id))(m, ctx))
+    }
+  }
+
+
+  private def placeParam(id: Int, mCTX: MethodParamContext)(m: Method, ctx: MethodDeclContext): Unit = {
+    m.deepFind(mCTX.ID().getText) match {
+      case None => throw new AssertionError(s"Method not defined for ${ctx.ID().getText}")
+      case Some(symbol: ParamSymbol) => symbol.id = id
+    }
   }
 
   override def exitMethodDecl(ctx: MethodDeclContext): Unit = exitScope {
-    methodGenerator.returnValue()
-    methodGenerator.endMethod()
+//    val klassName = "inter"
+//    val klassFile = new File(s"$klassName.class")
+//    val fileOutputStream = new FileOutputStream(klassFile)
+//    fileOutputStream.write(classWriter.toByteArray)
+//    fileOutputStream.close()
+//    System.exit(1)
+    Try {
+      methodGenerator.returnValue()
+      methodGenerator.endMethod()
+    }
   }
 
   private def enterScope(ctx: ParserRuleContext)(block: => Unit): Unit = {

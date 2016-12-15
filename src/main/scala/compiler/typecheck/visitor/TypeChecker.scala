@@ -21,9 +21,7 @@ class TypeChecker(
   var currScope: Option[Scope] = None
   implicit val _map = klassMap
 
-  override def visitMainClass(ctx: MainClassContext): Klass = {
-    null
-  }
+  override def visitMainClass(ctx: MainClassContext): Klass = enterScope(ctx)
 
   override def visitBaseClass(ctx: BaseClassContext): Klass = {
     enterScope(ctx)
@@ -36,6 +34,8 @@ class TypeChecker(
   override def visitCaseClassDecl(ctx: CaseClassDeclContext): Klass = enterScope(ctx)
 
   override def visitParenExpr(ctx: ParenExprContext): Klass = visit(ctx.expr())
+
+
 
   override def visitType(ctx: TypeContext): Klass = {
     Option(ctx.ID) match {
@@ -137,7 +137,7 @@ class TypeChecker(
   }
 
   override def visitArrLenExpression(ctx: ArrLenExpressionContext): Klass = {
-    val intArr = visit(ctx.expr())
+    val intArr: Klass = visit(ctx.expr())
     intArr match {
       case Klass("int[]", _) => klassMap get "int" get
       case actual: Klass => throw InvalidType(actual, klassMap get "int[]" get, ctx.expr().getStart)
@@ -160,7 +160,7 @@ class TypeChecker(
   }
 
   override def visitIdLiteral(ctx: IdLiteralContext): Klass = {
-    val symbolName = ctx.ID().getSymbol.getText
+    val symbolName: String = ctx.ID().getSymbol.getText
     currScope match {
       case None => throw new AssertionError("Invalid type checker state.")
       case Some(scope) => scope.deepFind(symbolName) match {
@@ -203,6 +203,9 @@ class TypeChecker(
   override def visitMethodCallExpression(ctx: MethodCallExpressionContext): Klass = {
     val targetsType: Klass = visit(ctx.expr(0))
     val methodName = ctx.ID.getText
+
+
+    callerTypes.put(ctx, targetsType)
 
     targetsType.deepFind(methodName) match {
       case Some(method: Method) => handleMethodCall(ctx, method)

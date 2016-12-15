@@ -143,5 +143,3 @@ class BS{
     }
 
 }
-
-case class GoodBye(int a);

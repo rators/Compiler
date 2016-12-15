@@ -2,7 +2,7 @@ package compiler.typecheck.scope
 
 import antlr4.MiniJavaParser.{CaseClassDeclContext, MethodDeclContext}
 import compiler.typecheck.scope.Scope.{LinkedSymbolMap, SymbolMap}
-import compiler.typecheck.symbol.{PropertySymbol, SubSymbol, Symbol}
+import compiler.typecheck.symbol.{ParamSymbol, PropertySymbol, SubSymbol, Symbol}
 
 
 case class Signature(returnType: Klass, name: String, params: Method.Params) {
@@ -103,9 +103,8 @@ class Method(override val name: String, override val kType: Klass, val ownerKlas
 
   override def toString = s"Method($locals, $initializedVariables, $name, $kType, $parentScope, $paramDefs)"
 
-  def signature = Signature(this.kType, name, paramDefs.map(_._2.asInstanceOf[PropertySymbol]).map(_.kType).toList)
+  def signature = Signature(this.kType, name, paramDefs.map(_._2.asInstanceOf[ParamSymbol]).map(_.kType).toList)
 
-  def asAsmMethod: org.objectweb.asm.commons.Method = {}
 }
 
 object Method {

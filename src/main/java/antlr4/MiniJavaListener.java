@@ -370,6 +370,18 @@ public interface MiniJavaListener extends ParseTreeListener {
 	 */
 	void exitAndExpr(MiniJavaParser.AndExprContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code booleanLit}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterBooleanLit(MiniJavaParser.BooleanLitContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code booleanLit}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitBooleanLit(MiniJavaParser.BooleanLitContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code intLiteral}
 	 * labeled alternative in {@link MiniJavaParser#atom}.
 	 * @param ctx the parse tree
@@ -429,16 +441,4 @@ public interface MiniJavaListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIntegerArr(MiniJavaParser.IntegerArrContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code booleanLit}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void enterBooleanLit(MiniJavaParser.BooleanLitContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code booleanLit}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 */
-	void exitBooleanLit(MiniJavaParser.BooleanLitContext ctx);
 }

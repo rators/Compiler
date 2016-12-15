@@ -224,6 +224,13 @@ public interface MiniJavaVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAndExpr(MiniJavaParser.AndExprContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code booleanLit}
+	 * labeled alternative in {@link MiniJavaParser#atom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBooleanLit(MiniJavaParser.BooleanLitContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code intLiteral}
 	 * labeled alternative in {@link MiniJavaParser#atom}.
 	 * @param ctx the parse tree
@@ -258,11 +265,4 @@ public interface MiniJavaVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIntegerArr(MiniJavaParser.IntegerArrContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code booleanLit}
-	 * labeled alternative in {@link MiniJavaParser#atom}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBooleanLit(MiniJavaParser.BooleanLitContext ctx);
 }

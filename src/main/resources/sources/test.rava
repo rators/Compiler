@@ -1,51 +1,11 @@
-class BinaryTree{
-    public static void main(String[] a){
-	System.out.println(new BT().Start());
+class BinaryTree {
+    public static void main(String[] a) {
+        System.out.println(new Printer().Go());
     }
 }
 
-class A {
-    public int hola(){
-        int g;
-        g = 1;
-        return g;
-    }
-}
-
-class B extends B {
-}
-
-class C extends B {
-    public int hola(){
-        B b;
-        int g;
-        boolean hi;
-        g = 1;
-        hi = true;
-
-        if(true){
-
-        } else {
-
-        }
-
-        return 1;
-    }
-}
-
-class Test {
-
-    public int hello(A a, A b){
-        int c;
-        c = 1;
-        return 1;
-    }
-
-    public boolean hi(int a){
-        int d;
-        B b;
-        d = this.hello(new B(), new A());
-        b = new C();
-        return true;
+class Printer {
+    public int Go(){
+        return 20;
     }
 }

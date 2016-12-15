@@ -1939,6 +1939,23 @@ public class MiniJavaParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
+	public static class BooleanLitContext extends AtomContext {
+		public TerminalNode BOOLEAN_LIT() { return getToken(MiniJavaParser.BOOLEAN_LIT, 0); }
+		public BooleanLitContext(AtomContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof MiniJavaListener ) ((MiniJavaListener)listener).enterBooleanLit(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof MiniJavaListener ) ((MiniJavaListener)listener).exitBooleanLit(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MiniJavaVisitor ) return ((MiniJavaVisitor<? extends T>)visitor).visitBooleanLit(this);
+			else return visitor.visitChildren(this);
+		}
+	}
 	public static class IntegerArrContext extends AtomContext {
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
@@ -1958,23 +1975,6 @@ public class MiniJavaParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class BooleanLitContext extends AtomContext {
-		public TerminalNode BOOLEAN_LIT() { return getToken(MiniJavaParser.BOOLEAN_LIT, 0); }
-		public BooleanLitContext(AtomContext ctx) { copyFrom(ctx); }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof MiniJavaListener ) ((MiniJavaListener)listener).enterBooleanLit(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof MiniJavaListener ) ((MiniJavaListener)listener).exitBooleanLit(this);
-		}
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof MiniJavaVisitor ) return ((MiniJavaVisitor<? extends T>)visitor).visitBooleanLit(this);
-			else return visitor.visitChildren(this);
-		}
-	}
 
 	public final AtomContext atom() throws RecognitionException {
 		AtomContext _localctx = new AtomContext(_ctx, getState());
@@ -1984,65 +1984,65 @@ public class MiniJavaParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,24,_ctx) ) {
 			case 1:
-				_localctx = new IntLiteralContext(_localctx);
+				_localctx = new BooleanLitContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(286);
-				match(INT_LIT);
+				match(BOOLEAN_LIT);
 				}
 				break;
 			case 2:
-				_localctx = new IdLiteralContext(_localctx);
+				_localctx = new IntLiteralContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(287);
-				match(ID);
+				match(INT_LIT);
 				}
 				break;
 			case 3:
-				_localctx = new ConstructorCallContext(_localctx);
+				_localctx = new IdLiteralContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(288);
-				match(T__27);
-				setState(289);
 				match(ID);
-				setState(290);
-				match(T__6);
-				setState(291);
-				match(T__10);
 				}
 				break;
 			case 4:
-				_localctx = new ThisCallContext(_localctx);
+				_localctx = new ConstructorCallContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
+				setState(289);
+				match(T__27);
+				setState(290);
+				match(ID);
+				setState(291);
+				match(T__6);
 				setState(292);
-				match(T__28);
+				match(T__10);
 				}
 				break;
 			case 5:
-				_localctx = new IntegerArrContext(_localctx);
+				_localctx = new ThisCallContext(_localctx);
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(293);
-				match(T__27);
-				setState(294);
-				match(T__17);
-				setState(295);
-				match(T__8);
-				setState(296);
-				expr(0);
-				setState(297);
-				match(T__9);
+				match(T__28);
 				}
 				break;
 			case 6:
-				_localctx = new BooleanLitContext(_localctx);
+				_localctx = new IntegerArrContext(_localctx);
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(299);
-				match(BOOLEAN_LIT);
+				setState(294);
+				match(T__27);
+				setState(295);
+				match(T__17);
+				setState(296);
+				match(T__8);
+				setState(297);
+				expr(0);
+				setState(298);
+				match(T__9);
 				}
 				break;
 			}
@@ -2184,15 +2184,14 @@ public class MiniJavaParser extends Parser {
 		"\2\2\u011b\u00f7\3\2\2\2\u011b\u00fa\3\2\2\2\u011b\u00fd\3\2\2\2\u011b"+
 		"\u0100\3\2\2\2\u011b\u0103\3\2\2\2\u011b\u0106\3\2\2\2\u011b\u0109\3\2"+
 		"\2\2\u011b\u010c\3\2\2\2\u011c\u011f\3\2\2\2\u011d\u011b\3\2\2\2\u011d"+
-		"\u011e\3\2\2\2\u011e\35\3\2\2\2\u011f\u011d\3\2\2\2\u0120\u012f\7\'\2"+
-		"\2\u0121\u012f\7&\2\2\u0122\u0123\7\36\2\2\u0123\u0124\7&\2\2\u0124\u0125"+
-		"\7\t\2\2\u0125\u012f\7\r\2\2\u0126\u012f\7\37\2\2\u0127\u0128\7\36\2\2"+
-		"\u0128\u0129\7\24\2\2\u0129\u012a\7\13\2\2\u012a\u012b\5\34\17\2\u012b"+
-		"\u012c\7\f\2\2\u012c\u012f\3\2\2\2\u012d\u012f\7(\2\2\u012e\u0120\3\2"+
-		"\2\2\u012e\u0121\3\2\2\2\u012e\u0122\3\2\2\2\u012e\u0126\3\2\2\2\u012e"+
-		"\u0127\3\2\2\2\u012e\u012d\3\2\2\2\u012f\37\3\2\2\2\33$8>JP\\bosvz\u008d"+
-		"\u0091\u0094\u009b\u00a1\u00b5\u00bb\u00e0\u00f5\u0115\u0118\u011b\u011d"+
-		"\u012e";
+		"\u011e\3\2\2\2\u011e\35\3\2\2\2\u011f\u011d\3\2\2\2\u0120\u012f\7(\2\2"+
+		"\u0121\u012f\7\'\2\2\u0122\u012f\7&\2\2\u0123\u0124\7\36\2\2\u0124\u0125"+
+		"\7&\2\2\u0125\u0126\7\t\2\2\u0126\u012f\7\r\2\2\u0127\u012f\7\37\2\2\u0128"+
+		"\u0129\7\36\2\2\u0129\u012a\7\24\2\2\u012a\u012b\7\13\2\2\u012b\u012c"+
+		"\5\34\17\2\u012c\u012d\7\f\2\2\u012d\u012f\3\2\2\2\u012e\u0120\3\2\2\2"+
+		"\u012e\u0121\3\2\2\2\u012e\u0122\3\2\2\2\u012e\u0123\3\2\2\2\u012e\u0127"+
+		"\3\2\2\2\u012e\u0128\3\2\2\2\u012f\37\3\2\2\2\33$8>JP\\bosvz\u008d\u0091"+
+		"\u0094\u009b\u00a1\u00b5\u00bb\u00e0\u00f5\u0115\u0118\u011b\u011d\u012e";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
