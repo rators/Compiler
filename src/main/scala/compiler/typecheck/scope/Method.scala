@@ -4,9 +4,8 @@ import antlr4.MiniJavaParser.{CaseClassDeclContext, MethodDeclContext}
 import compiler.typecheck.scope.Scope.{LinkedSymbolMap, SymbolMap}
 import compiler.typecheck.symbol.{ParamSymbol, PropertySymbol, SubSymbol, Symbol}
 
-
 case class Signature(returnType: Klass, name: String, params: Method.Params) {
-  val toAsmMethod: Method.ASMMethod = {
+  def toAsmMethod: Method.ASMMethod = {
     val sigString = s"${returnType.name} $name ${params.map(_.name).mkString("(", ",", ")")}"
     org.objectweb.asm.commons.Method.getMethod(sigString)
   }

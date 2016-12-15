@@ -1,21 +1,18 @@
 package compiler.typecheck.listener
 
 import java.io.{File, FileOutputStream, PrintStream}
-import java.nio.charset.{Charset, StandardCharsets}
-import java.util.Scanner
 
 import antlr4.MiniJavaBaseListener
 import antlr4.MiniJavaParser._
-import compiler.typecheck.scope.{Klass, Scope}
+import compiler.typecheck.scope.{Klass, Method, Scope}
 import compiler.typecheck.symbol.{ParamSymbol, PropertySymbol, VarSymbol}
 import compiler.typecheck.utils.KlassMap
+import compiler.typecheck.visitor.TypeChecker
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTreeProperty
 import org.objectweb.asm.Opcodes._
 import org.objectweb.asm.commons.GeneratorAdapter
 import org.objectweb.asm.{ClassWriter, Label, Opcodes, Type}
-import compiler.typecheck.scope.Method
-import compiler.typecheck.visitor.TypeChecker
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.IndexedSeq
@@ -134,9 +131,13 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
 
     currScope.deepFind(ctx.ID().getText) match {
       case None => throw new AssertionError(s"Symbol not defined for ${ctx.ID().getText}")
-      case Some(symbol) =>
+      case Some(symbol: PropertySymbol) =>
         classWriter.visitField(
-          ACC_PROTECTED, symbol.name, symbol.kType.asAsmType.getDescriptor, null, null
+          ACC_PROTECTED,
+          symbol.name,
+          symbol.kType.asAsmType.getDescriptor,
+          null,
+          null
         ).visitEnd()
     }
   }
@@ -160,7 +161,6 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     }
   }
 
-
   override def enterPrintToConsole(ctx: PrintToConsoleContext): Unit = {
     methodGenerator.getStatic(Type.getType(classOf[System]), "out", Type.getType(classOf[PrintStream]))
   }
@@ -169,10 +169,14 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     methodGenerator.invokeVirtual(Type.getType(classOf[PrintStream]), org.objectweb.asm.commons.Method.getMethod("void println (int)"))
   }
 
-  override def enterPropertyDecl(ctx: PropertyDeclContext): Unit = {
-    methodGenerator.loadThis()
+  override def enterVarDefinition(ctx: VarDefinitionContext): Unit = {
+    currentScope match {
+      case None => throw new AssertionError("Shit blew up!")
+      case Some(p: PropertySymbol) =>
+        methodGenerator.loadThis()
+      case _ => "fuck it!"
+    }
   }
-
 
   override def exitVarDefinition(ctx: VarDefinitionContext): Unit = {
     currentScope match {
@@ -181,7 +185,6 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
         currScope.deepFind(ctx.ID().getText) match {
           case Some(property: PropertySymbol) =>
             val enclosingKlass = TypeChecker.getEnclosingKlass(Some(currScope))
-            methodGenerator.loadThis()
             methodGenerator.putField(enclosingKlass.asAsmType, property.name, property.kType.asAsmType)
           case Some(paramSymbol: ParamSymbol) => methodGenerator.storeArg(paramSymbol.id)
           case Some(localSymbol: VarSymbol) => methodGenerator.storeLocal(localSymbol.id, localSymbol.kType.asAsmType)
@@ -211,7 +214,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   override def enterIfStatement(ctx: IfStatementContext): Unit = {
     val enterElse = methodGenerator.newLabel()
     val exitElse = methodGenerator.newLabel()
-    //methodGenerator.ifZCmp(GeneratorAdapter.EQ, enterElse)
+
     labelStack push exitElse
     labelStack push enterElse
     labelStack push exitElse
@@ -251,15 +254,14 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     methodGenerator.mark(labelStack.pop)
   }
 
-
   override def exitAndExpr(ctx: AndExprContext): Unit = {
     methodGenerator.math(GeneratorAdapter.AND, Type.BOOLEAN_TYPE)
   }
 
-  override def enterLessThanExpr(ctx: LessThanExprContext): Unit = {
-    //Just do the roundabout long and hard way.
+  override def exitLessThanExpr(ctx: LessThanExprContext): Unit = {
     val trueLabel = methodGenerator.newLabel()
     val endLabel = methodGenerator.newLabel()
+
     methodGenerator.ifCmp(Type.INT_TYPE, GeneratorAdapter.LT, trueLabel)
     methodGenerator.push(false)
     methodGenerator.goTo(endLabel)
@@ -307,13 +309,13 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   }
 
   override def exitIdLiteral(ctx: IdLiteralContext): Unit = {
+    println(ctx.getText)
     currentScope match {
       case None => throw new AssertionError(s"Scope not defined in enter id literal ${ctx.getText}")
       case Some(currScope) =>
         currScope deepFind ctx.getText match {
           case None => throw new AssertionError(s"(${ctx.getStart.getLine}, ${ctx.getStart.getCharPositionInLine})Scope ${currScope.name} missing symbol: ${ctx.getText}")
-          case Some(paramSymbol: ParamSymbol) =>
-            methodGenerator.loadArg(paramSymbol.id)
+          case Some(paramSymbol: ParamSymbol) => methodGenerator.loadArg(paramSymbol.id)
           case Some(propertySymbol: PropertySymbol) =>
             val enclosingKlass = TypeChecker.getEnclosingKlass(Some(currScope)).asAsmType
             val symbolType = propertySymbol.kType.asAsmType
@@ -327,7 +329,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
               case "false" =>
                 val predicate = ctx.ID().getText.toBoolean
                 methodGenerator.push(predicate)
-              case _ => methodGenerator.loadLocal(varSymbol.id)
+              case _ => methodGenerator.loadLocal(varSymbol.id, varSymbol.kType.asAsmType)
             }
         }
     }
@@ -361,7 +363,6 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     }
   }
 
-
   private def placeParam(id: Int, mCTX: MethodParamContext)(m: Method, ctx: MethodDeclContext): Unit = {
     m.deepFind(mCTX.ID().getText) match {
       case None => throw new AssertionError(s"Method not defined for ${ctx.ID().getText}")
@@ -375,14 +376,14 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
       methodGenerator.endMethod()
     } match {
       case Failure(x) =>
-        val klassName = "fail!"
-        val klassFile = new File(s"$klassName.class")
+        println("Shit failed!")
+        val klassName = TypeChecker.getEnclosingKlass(Some(currentScope get)).name
+        val klassFile = new File(s"src/main/resources/sources/gen/fail.class")
         val fileOutputStream = new FileOutputStream(klassFile)
         fileOutputStream.write(classWriter.toByteArray)
         fileOutputStream.close()
         throw x
-      case Success(_) =>
-        "whata!"
+      case Success(_) => "whata!"
     }
   }
 
