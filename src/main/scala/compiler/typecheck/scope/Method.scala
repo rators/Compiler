@@ -7,7 +7,7 @@ import compiler.typecheck.symbol.{ParamSymbol, PropertySymbol, SubSymbol, Symbol
 case class Signature(returnType: Klass, name: String, params: Method.Params) {
   def toAsmMethod: Method.ASMMethod = {
     val sigString = s"${returnType.name} $name ${params.map(_.name).mkString("(", ",", ")")}"
-    org.objectweb.asm.commons.Method.getMethod(sigString)
+    org.objectweb.asm.commons.Method.getMethod(sigString, true)
   }
 }
 
