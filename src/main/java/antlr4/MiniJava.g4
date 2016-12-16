@@ -93,6 +93,8 @@ atom :
   # idLiteral
   | 'new' ID '(' ')'
   # constructorCall
+  | 'case' ID '(' ( expr ( ',' expr )* )? ')'
+  # constructorCall
   | 'this'
   # thisCall
   | 'new' 'int' '[' expr ']'

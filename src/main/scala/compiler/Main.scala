@@ -5,7 +5,7 @@ import java.io.{File, FileInputStream}
 import antlr4.MiniJavaParser.ProgContext
 import antlr4.{MiniJavaBaseListener, MiniJavaLexer, MiniJavaParser}
 import compiler.CompilerImpl._
-import compiler.typecheck.listener.{CodeGenerator, KlassDeclarator, SymbolDeclarator}
+import compiler.typecheck.listener.{CaseClassSynthesizer, CodeGenerator, KlassDeclarator, SymbolDeclarator}
 import compiler.typecheck.scope.{Klass, Scope}
 import compiler.typecheck.utils.KlassMap
 import compiler.typecheck.visitor.TypeChecker
@@ -14,15 +14,78 @@ import org.antlr.v4.runtime.tree.{ParseTreeProperty, ParseTreeWalker}
 
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success, Try}
+import scala.io.Source
 
 /**
   * Main class for Phase 1.
   */
 object Main extends App {
-      List("test", "binarysearch", "binarytree", "bubble", "factorial", "input" ,"linear", "linked").foreach(parseFile)
-//  List("test").foreach(parseFile)
+//      List("binarysearch", "binarytree", "bubble", "factorial", "input" ,"linear", "linked").foreach(parseFile)
+  List("test").foreach(parseFile)
+
+//  clearConstructors(Iterable("A"))
+
+  def clearConstructors(className: String, caseClasses: scala.collection.mutable.HashMap[String, String]) = {
+    val filename = s"./src/main/resources/sources/$className.rava"
+    println(caseClasses)
+
+    val builder = new java.lang.StringBuilder()
+    for (line <- Source.fromFile(filename).getLines()) {
+      builder.append(compileLine(caseClasses, line))
+    }
+    builder.toString
+  }
+
+  def compileLine(caseKlasses: scala.collection.mutable.HashMap[String, String], line: String): String = {
+    caseKlasses.keys.find((caseClass) => {
+      line.replace(s"case $caseClass(", s"new $caseClass().make$caseClass(") != line
+    }) match {
+      case Some(className) => line.replace(s"case $className(", s"new $className().make$className(")
+      case None => caseKlasses.keys.find((caseClass) => {
+        line.contains(s"case class $caseClass")
+      }) match {
+        case Some(className) => caseKlasses(className) + "\n"
+        case None => line + "\n"
+      }
+    }
+  }
 
   def parseFile(fileName: String): Unit = {
+    val inputString = genCaseKlasses(fileName)
+    println(s"Testing with input $inputString")
+    //create input stream from input file
+    val fileStream = stringToStream(inputString)
+    val lexer = new MiniJavaLexer(fileStream)
+    val tokenStream = new CommonTokenStream(lexer)
+    val parser = new MiniJavaParser(tokenStream)
+
+    //remove error listeners to ensure error messages are not repeated.
+    parser.removeErrorListeners()
+    parser.addErrorListener(new MiniJavaErrorListener())
+
+//    run the parser starting at the root rule `prog`
+    Try(parser.prog()) match {
+      case Success(progContext) =>
+        walkThrough(progContext)
+
+        val klassMap = klassDeclWalk(progContext)
+        val scope = new ParseTreeProperty[Scope]()
+        val callerTypes = new ParseTreeProperty[Klass]()
+        symbolDeclWalk(klassMap, scope, progContext)
+        typeCheckWalk(klassMap, scope, progContext, callerTypes)
+        codeGenWalk(klassMap, scope, progContext, callerTypes)
+      case Failure(e) =>
+        System.err.println(s"COMPILER ERR -- $e")
+    }
+  }
+
+  def walkThrough(parseTree: ProgContext): Unit = {
+    val walker = new ParseTreeWalker()
+
+    walker.walk(new MiniJavaBaseListener(), parseTree)
+  }
+
+  def genCaseKlasses(fileName: String): String = {
     //create input stream from input file
     val fileStream = fileToStream(s"/sources/$fileName.rava")
     val lexer = new MiniJavaLexer(fileStream)
@@ -33,25 +96,13 @@ object Main extends App {
     parser.removeErrorListeners()
     parser.addErrorListener(new MiniJavaErrorListener())
 
-    //run the parser starting at the root rule `prog`
-    Try(parser.prog()) match {
-      case Success(progContext) =>
-        walkThrough(progContext)
-
-        val klassMap = klassDeclWalk(progContext)
-        val scope = new ParseTreeProperty[Scope]()
-        val callerTypes = new ParseTreeProperty[Klass]()
-        symbolDeclWalk(klassMap, scope, progContext)
-        typeCheckWalk(klassMap, scope, progContext, callerTypes)
-//        codeGenWalk(klassMap, scope, progContext, callerTypes)
-      case Failure(e) => System.err.println(s"COMPILER ERR -- $e")
-    }
+    synthWalk(fileName, parser.prog())
   }
 
-  def walkThrough(parseTree: ProgContext): Unit = {
-    val walker = new ParseTreeWalker()
-
-    walker.walk(new MiniJavaBaseListener(), parseTree)
+  def synthWalk(fileName: String, parseTree: ProgContext): String = {
+    val synther = new CaseClassSynthesizer
+    ParseTreeWalker.DEFAULT.walk(synther, parseTree)
+    clearConstructors(fileName, synther.caseMap)
   }
 
   def klassDeclWalk(parseTree: ProgContext): KlassMap = {
@@ -74,7 +125,7 @@ object Main extends App {
     tryKlassDeclWalk match {
       case Failure(e) =>
         System.err.println(e.toString)
-        System.exit(1)
+        e.printStackTrace()
       case Success(_) => println("Klasses declared successfully!")
     }
   }
@@ -104,6 +155,11 @@ object Main extends App {
     val file = new File(sourceUrl.getFile)
     val fileInputStream = new FileInputStream(file)
     val input: CharStream = new ANTLRInputStream(fileInputStream)
+    input
+  }
+
+  def stringToStream(inputText: String): CharStream = {
+    val input: CharStream = new ANTLRInputStream(inputText)
     input
   }
 }

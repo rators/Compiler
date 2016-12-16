@@ -1,1 +1,7 @@
-case class Test(int a);
+class G {
+    public static void main(String[] args) {
+        System.out.println(case A(1, 2, 3));
+    }
+}
+
+case class A(int a, int b, int c);

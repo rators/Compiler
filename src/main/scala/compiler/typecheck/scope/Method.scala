@@ -104,6 +104,7 @@ class Method(override val name: String, override val kType: Klass, val ownerKlas
 
   def signature = Signature(this.kType, name, paramDefs.map(_._2.asInstanceOf[ParamSymbol]).map(_.kType).toList)
 
+  def consSignature = Signature(this.kType, name, paramDefs.map(_._2.asInstanceOf[PropertySymbol]).map(_.kType).toList)
 }
 
 object Method {
@@ -111,5 +112,5 @@ object Method {
   type ASMMethod = org.objectweb.asm.commons.Method
 
   def getSignatureSimple(methodDeclContext: MethodDeclContext) = methodDeclContext.ID().getText
-  def getSignatureSimple(methodDeclContext: CaseClassDeclContext) = methodDeclContext.ID().getText
+  def getSignatureSimple(methodDeclContext: CaseClassDeclContext) = s"make${methodDeclContext.ID().getText}"
 }

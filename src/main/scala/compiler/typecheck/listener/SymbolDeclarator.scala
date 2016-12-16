@@ -97,7 +97,9 @@ class SymbolDeclarator(val klassMap: KlassMap, val scopes: ParseTreeProperty[Sco
     implicit val _ctx = ctx
 
     methodType match {
-      case None => SymbolDeclarator.throwInvalidStateErr
+      case None =>
+        println(klassMap)
+        SymbolDeclarator.throwInvalidStateErr
       case Some(klassType) =>
         val methodName = Method.getSignatureSimple(ctx)
         currentScope match {
@@ -327,7 +329,9 @@ object SymbolDeclarator {
     * @throws RuntimeException
     *         Thrown if called
     */
-  def throwInvalidStateErr = throw new RuntimeException("Invalid state for SymbolDeclarator visitor")
+  def throwInvalidStateErr = {
+    throw new RuntimeException("Invalid state for SymbolDeclarator visitor")
+  }
 
   /**
     * Recursively checks the inheritance tree of a klass to ensure there does not exist a class that inherits

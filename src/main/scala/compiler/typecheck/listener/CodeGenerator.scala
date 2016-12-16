@@ -1,6 +1,7 @@
 package compiler.typecheck.listener
 
 import java.io.{File, FileOutputStream, PrintStream}
+import java.lang.reflect.Executable
 
 import antlr4.MiniJavaBaseListener
 import antlr4.MiniJavaParser._
@@ -39,9 +40,11 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
   //boolean isArg
   var argCount: Int = 0
 
+  var mainName = "__"
+
   override def enterMainClass(ctx: MainClassContext): Unit = {
     val mainKlass = klasses.get(ctx.ID(0).getText).get
-
+    mainName = mainKlass.name
     val klassName = mainKlass.name
     classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
     classWriter.visit(V1_1, ACC_PUBLIC, klassName, null, "java/lang/Object", null)
@@ -64,7 +67,10 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
 
     val mainKlass = klasses.get(ctx.ID(0).getText).get
     val klassName = mainKlass.name
-    val klassFile = new File(s"src/main/resources/sources/gen/$klassName.class")
+
+    new File(s"src/main/resources/sources/gen/${klassName.toLowerCase}").mkdir()
+
+    val klassFile = new File(s"src/main/resources/sources/gen/${klassName.toLowerCase}/$klassName.class")
     val fileOutputStream = new FileOutputStream(klassFile)
     fileOutputStream.write(classWriter.toByteArray)
     fileOutputStream.close()
@@ -116,7 +122,7 @@ class CodeGenerator(klasses: KlassMap, scopes: ParseTreeProperty[Scope], callerT
     classWriter.visitEnd()
     val klass = klasses.get(classID).get
     val klassName = klass.name
-    val klassFile = new File(s"src/main/resources/sources/gen/$klassName.class")
+    val klassFile = new File(s"src/main/resources/sources/gen/${mainName.toLowerCase}/$klassName.class")
     val fileOutputStream = new FileOutputStream(klassFile)
     fileOutputStream.write(classWriter.toByteArray)
     fileOutputStream.close()
