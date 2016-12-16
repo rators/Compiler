@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
   * Main class for Phase 1.
   */
 object Main extends App {
-      List("binarysearch", "bubble", "factorial", "input", "linear", "binarytree").foreach(parseFile)
+      List("test", "binarysearch", "binarytree", "bubble", "factorial", "input" ,"linear", "linked").foreach(parseFile)
 //  List("test").foreach(parseFile)
 
   def parseFile(fileName: String): Unit = {
@@ -43,7 +43,7 @@ object Main extends App {
         val callerTypes = new ParseTreeProperty[Klass]()
         symbolDeclWalk(klassMap, scope, progContext)
         typeCheckWalk(klassMap, scope, progContext, callerTypes)
-        codeGenWalk(klassMap, scope, progContext, callerTypes)
+//        codeGenWalk(klassMap, scope, progContext, callerTypes)
       case Failure(e) => System.err.println(s"COMPILER ERR -- $e")
     }
   }
